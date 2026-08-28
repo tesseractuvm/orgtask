@@ -1,0 +1,32 @@
+# Dependencias
+node_modules
+.pnp
+.pnp.js
+
+# Compilacion
+dist
+dist-ssr
+build
+
+# Variables de entorno (nunca subir claves al repositorio)
+.env
+.env.local
+.env.*.local
+
+# Registros
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+logs
+*.log
+
+# Editores y sistema operativo
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+Thumbs.db
+
+# Supabase local
+supabase/.temp
+supabase/.branches
