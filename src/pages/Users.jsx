@@ -3,7 +3,7 @@ import PageHeader from '../components/layout/PageHeader';
 import Badge from '../components/Badge';
 import AccessDenied from './AccessDenied';
 import { useAuth } from '../context/AuthContext';
-import { listProfiles } from '../services/authService';
+import { authService } from '../services';
 import { canManageUsers, ROLE_LABELS } from '../lib/permissions';
 import { AREA_TONES } from '../lib/taskFormat';
 
@@ -17,7 +17,7 @@ export default function Users() {
 
   useEffect(() => {
     document.title = 'Usuarios · OrgTask';
-    listProfiles().then(setPersonas);
+    authService.listProfiles().then(setPersonas);
   }, []);
 
   if (!canManageUsers(profile)) {

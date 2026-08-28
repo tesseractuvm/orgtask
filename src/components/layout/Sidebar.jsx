@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { canManageUsers, visibleAreas, ROLE_LABELS } from '../../lib/permissions';
-import { areas as todasLasAreas } from '../../data/seedData';
+import { AREAS as todasLasAreas } from '../../lib/areas';
 
 const AREA_DOT = {
   CPYG: 'bg-area-cpyg',

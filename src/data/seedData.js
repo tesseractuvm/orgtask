@@ -6,31 +6,12 @@
  * conocen, solo hablan con src/services.
  */
 
+import { AREAS } from '../lib/areas';
+
 export const DEMO_PASSWORD = 'OrgTaskDemo2026';
 
-export const areas = [
-  {
-    code: 'CPYG',
-    slug: 'cpyg',
-    shortName: 'CPyG',
-    name: 'Comunidad de Profesionales y Graduados',
-    order: 1,
-  },
-  {
-    code: 'RYVE',
-    slug: 'ryve',
-    shortName: 'RyVE',
-    name: 'Relación y Vinculación Estudiantil',
-    order: 2,
-  },
-  {
-    code: 'DEPORTES',
-    slug: 'deportes',
-    shortName: 'Deportes',
-    name: 'Unidad de Deportes',
-    order: 3,
-  },
-];
+// Las áreas son las mismas que conoce la navegación, no una copia aparte
+export const areas = AREAS;
 
 export const profiles = [
   {

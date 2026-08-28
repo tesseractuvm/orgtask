@@ -3,7 +3,7 @@ import { LogIn } from 'lucide-react';
 import Button from '../components/Button';
 import Input from '../components/Input';
 import { useAuth } from '../context/AuthContext';
-import { demoAccounts } from '../services/authService';
+import { authService, usandoSupabase } from '../services';
 import { DEMO_PASSWORD } from '../data/seedData';
 import { ROLE_LABELS } from '../lib/permissions';
 
@@ -102,6 +102,7 @@ export default function Login() {
             </Button>
           </form>
 
+          {!usandoSupabase && (
           <div className="mt-8 rounded border border-line bg-surface-muted p-4">
             <p className="text-sm font-medium text-ink">Cuentas de prueba</p>
             <p className="mt-1 text-sm text-slate">
@@ -109,7 +110,7 @@ export default function Login() {
               ver los permisos de cada rol.
             </p>
             <ul className="mt-3 flex flex-col gap-1">
-              {demoAccounts().map((cuenta) => (
+              {authService.demoAccounts().map((cuenta) => (
                 <li key={cuenta.email}>
                   <button
                     type="button"
@@ -128,6 +129,7 @@ export default function Login() {
               ))}
             </ul>
           </div>
+          )}
         </div>
       </div>
     </div>

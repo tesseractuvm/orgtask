@@ -10,7 +10,7 @@ import BoardColumn from '../components/board/BoardColumn';
 import TaskFormModal from '../components/board/TaskFormModal';
 import AccessDenied from './AccessDenied';
 import { useAuth } from '../context/AuthContext';
-import * as tareas from '../services/tasksService';
+import { tasksService as tareas } from '../services';
 import { STATUSES, AREA_TONES } from '../lib/taskFormat';
 import {
   canArchiveTask,
@@ -20,7 +20,7 @@ import {
   canMoveTask,
   canSeeArea,
 } from '../lib/permissions';
-import { areas as todasLasAreas } from '../data/seedData';
+import { AREAS as todasLasAreas } from '../lib/areas';
 
 export default function AreaBoard() {
   const { slug } = useParams();

@@ -69,3 +69,17 @@ export function demoAccounts() {
     isAdmin: p.isAdmin,
   }));
 }
+
+/**
+ * Cambio de contraseña. Sin Supabase no hay dónde guardarla de forma segura, así
+ * que se valida y se avisa con claridad en vez de fingir que funcionó.
+ */
+export async function updatePassword(newPassword) {
+  await espera(150);
+  if (String(newPassword).length < 8) {
+    throw new Error('La contraseña debe tener al menos 8 caracteres.');
+  }
+  throw new Error(
+    'El cambio de contraseña necesita la conexión con Supabase. Mientras se usan cuentas de prueba, la contraseña es fija.'
+  );
+}

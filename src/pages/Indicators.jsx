@@ -3,7 +3,7 @@ import PageHeader from '../components/layout/PageHeader';
 import BarChart from '../components/indicators/BarChart';
 import Badge from '../components/Badge';
 import { useAuth } from '../context/AuthContext';
-import * as tareas from '../services/tasksService';
+import { tasksService as tareas } from '../services';
 import { AREA_TONES, priorityLabel, statusLabel } from '../lib/taskFormat';
 
 const MESES_CORTOS = [

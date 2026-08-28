@@ -10,10 +10,10 @@ import Toast from '../components/Toast';
 import EmptyState from '../components/EmptyState';
 import TaskTimeline from '../components/history/TaskTimeline';
 import { useAuth } from '../context/AuthContext';
-import * as tareas from '../services/tasksService';
+import { tasksService as tareas } from '../services';
 import { canRestoreTask, visibleAreas } from '../lib/permissions';
 import { AREA_TONES, longDate, monthLabel } from '../lib/taskFormat';
-import { areas as todasLasAreas } from '../data/seedData';
+import { AREAS as todasLasAreas } from '../lib/areas';
 
 /**
  * Repositorio histórico. Vive fuera del tablero, ordenado del archivado más

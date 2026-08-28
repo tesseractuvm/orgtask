@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 import PageHeader from '../components/layout/PageHeader';
 import { useAuth } from '../context/AuthContext';
-import * as tareas from '../services/tasksService';
+import { tasksService as tareas } from '../services';
 import { visibleAreas } from '../lib/permissions';
 import { AREA_TONES, dueState } from '../lib/taskFormat';
 
