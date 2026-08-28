@@ -1,0 +1,13 @@
+# Normaliza los finales de linea a LF dentro del repositorio.
+# Evita que Git avise por cada archivo en cada commit hecho desde Windows.
+* text=auto eol=lf
+
+# Archivos binarios: Git no debe tocarlos
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.ico binary
+*.woff binary
+*.woff2 binary
