@@ -146,4 +146,20 @@ describe('Ingreso contra Supabase', () => {
       signInWithPassword({ email: 'quien.sea@uvm.cl', password: 'OrgTaskDemo2026' })
     ).rejects.toThrow(/no tiene perfil asignado/i);
   });
+  it('avisa que es RLS cuando las areas vuelven vacias, en vez de culpar al perfil', async () => {
+    authFalso.signInWithPassword.mockResolvedValue({
+      data: { user: { id: 'u-javier' } },
+      error: null,
+    });
+    // Sin error, pero sin filas: es como se ve una politica RLS que no deja leer
+    fromFalso.mockImplementation((tabla) =>
+      tabla === 'areas'
+        ? consulta({ data: [], error: null })
+        : consulta({ data: FILA_JAVIER, error: null })
+    );
+
+    await expect(
+      signInWithPassword({ email: 'javier.moya@uvm.cl', password: 'OrgTaskDemo2026' })
+    ).rejects.toThrow(/RLS/i);
+  });
 });

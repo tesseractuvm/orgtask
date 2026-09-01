@@ -9,6 +9,18 @@ import { guardarAreas, perfilDesdeFila } from './mappers';
 async function asegurarAreas() {
   const { data, error } = await supabase.from('areas').select('*').order('display_order');
   if (error) throw new Error(traducirError(error, 'No se pudieron cargar las áreas.'));
+
+  // Las tres áreas son datos fijos: siempre están. Que la consulta vuelva vacía
+  // sin error significa que las políticas RLS no dejaron leer ni una fila, que
+  // es lo que pasa cuando la sesión no llega como `authenticated` o cuando la
+  // migración de seguridad no se aplicó completa. Sin este aviso el problema
+  // aparecía más adelante disfrazado de "tu cuenta no tiene perfil asignado".
+  if (!data || data.length === 0) {
+    throw new Error(
+      'La base de datos no devolvió ninguna área. Suele ser que las políticas de seguridad (RLS) no dejan leer las tablas: revisa que la migración 0002_politicas_seguridad.sql esté aplicada.'
+    );
+  }
+
   guardarAreas(data);
 }
 
