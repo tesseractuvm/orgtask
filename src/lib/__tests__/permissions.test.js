@@ -3,6 +3,8 @@ import {
   canArchiveTask,
   canChangePriority,
   canCreateTask,
+  canEditTask,
+  canManageUsers,
   canMoveTask,
   canRestoreTask,
   canSeeArea,
@@ -87,5 +89,37 @@ describe('Prioridad, creación y archivado', () => {
     expect(canRestoreTask(director)).toBe(true);
     expect(canRestoreTask(liderCpyg)).toBe(false);
     expect(canRestoreTask(adminCpyg)).toBe(false);
+  });
+});
+
+/**
+ * Javier Moya es colaborador de CPyG y ademas administra las cuentas del
+ * equipo. Son dos permisos independientes y conviene que sigan siendolo: que
+ * pueda dar de alta a una persona no lo convierte en jefe de su area.
+ */
+describe('Quien administra usuarios', () => {
+  const javier = adminCpyg;
+
+  it('el colaborador con is_admin administra usuarios', () => {
+    expect(canManageUsers(javier)).toBe(true);
+  });
+
+  it('nadie mas los administra, ni siquiera el Director sin is_admin', () => {
+    expect(canManageUsers(director)).toBe(false);
+    expect(canManageUsers(liderCpyg)).toBe(false);
+    expect(canManageUsers(colabCpyg)).toBe(false);
+    expect(canManageUsers(null)).toBe(false);
+  });
+
+  it('administrar cuentas no da mando sobre las tareas del area', () => {
+    expect(canCreateTask(javier, 'CPYG')).toBe(false);
+    expect(canEditTask(javier, tareaDeOtro)).toBe(false);
+    expect(canChangePriority(javier, tareaDeOtro)).toBe(false);
+    expect(canArchiveTask(javier, { ...tareaDeOtro, status: 'hecho' })).toBe(false);
+  });
+
+  it('pero si le deja ver las tres areas, para poder administrarlas', () => {
+    expect(canSeeArea(javier, 'RYVE')).toBe(true);
+    expect(canSeeArea(javier, 'DEPORTES')).toBe(true);
   });
 });
