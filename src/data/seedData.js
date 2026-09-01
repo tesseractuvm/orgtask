@@ -26,7 +26,10 @@ export const profiles = [
     areaCode: null,
     role: 'director',
     colorToken: 'naranjo',
-    isAdmin: true,
+    // El rol de director ya le da acceso a las tres áreas y a todas sus
+    // tareas (ver lib/permissions.js): is_admin es un permiso aparte, solo
+    // para administrar cuentas, y hoy lo tiene Javier Moya en su lugar.
+    isAdmin: false,
     isActive: true,
   },
 
@@ -58,7 +61,10 @@ export const profiles = [
     areaCode: 'CPYG',
     role: 'colaborador',
     colorToken: 'azul',
-    isAdmin: false,
+    // Colaborador de su área y además administrador de usuarios: son dos
+    // permisos independientes (ver profiles_lectura en la migración de RLS),
+    // así que puede agregar y desactivar cuentas sin dejar de ser colaborador.
+    isAdmin: true,
     isActive: true,
   },
 

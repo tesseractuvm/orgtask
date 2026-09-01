@@ -20,7 +20,7 @@
 --   daniel.tello@uvm.cl           Daniel Tello           Director, ve las 3 areas
 --   francisca.tapia@uvm.cl        Francisca Tapia        Lider de CPyG        amarillo
 --   catalina.tamayo@uvm.cl        Catalina Tamayo        Colaboradora CPyG    rosado
---   javier.moya@uvm.cl            Javier Moya            Colaborador CPyG     azul
+--   javier.moya@uvm.cl            Javier Moya            Colaborador CPyG     azul   + admin
 --   juan.caneo@uvm.cl             Juan Pablo Caneo       Lider de RyVE        verde
 --   makarena.ibaceta@uvm.cl       Macarena Ibaceta       Colaboradora RyVE    lila
 --   teresa.urzua@uvm.cl           Teresita Urzua         Colaboradora RyVE    magenta
@@ -162,8 +162,12 @@ revoke all on function public.seed_crear_usuario_demo(
 ) from public, anon, authenticated;
 
 
+-- El rol de director ya le da a Daniel las tres areas y todas sus tareas
+-- (ver public.leads_area en la migracion de RLS); is_admin es un permiso
+-- aparte, solo para administrar cuentas, y hoy lo tiene Javier Moya en su
+-- lugar.
 select public.seed_crear_usuario_demo(
-  'daniel.tello@uvm.cl', 'OrgTaskDemo2026', 'Daniel Tello', 'director', null, 'naranjo', true
+  'daniel.tello@uvm.cl', 'OrgTaskDemo2026', 'Daniel Tello', 'director', null, 'naranjo'
 );
 select public.seed_crear_usuario_demo(
   'francisca.tapia@uvm.cl', 'OrgTaskDemo2026', 'Francisca Tapia', 'lider', 'CPYG', 'amarillo'
@@ -171,8 +175,11 @@ select public.seed_crear_usuario_demo(
 select public.seed_crear_usuario_demo(
   'catalina.tamayo@uvm.cl', 'OrgTaskDemo2026', 'Catalina Tamayo', 'colaborador', 'CPYG', 'rosado'
 );
+-- Colaborador de su area y ademas administrador de usuarios: son dos permisos
+-- independientes, asi que puede agregar y desactivar cuentas sin dejar de ser
+-- colaborador de CPyG.
 select public.seed_crear_usuario_demo(
-  'javier.moya@uvm.cl', 'OrgTaskDemo2026', 'Javier Moya', 'colaborador', 'CPYG', 'azul'
+  'javier.moya@uvm.cl', 'OrgTaskDemo2026', 'Javier Moya', 'colaborador', 'CPYG', 'azul', true
 );
 select public.seed_crear_usuario_demo(
   'juan.caneo@uvm.cl', 'OrgTaskDemo2026', 'Juan Pablo Caneo', 'lider', 'RYVE', 'verde'

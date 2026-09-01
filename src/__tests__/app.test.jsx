@@ -186,8 +186,10 @@ describe('Recorrido de la aplicación', () => {
       )
     ).toBeInTheDocument();
   });
-  it('el Director crea una persona nueva y ella puede iniciar sesión', async () => {
-    const usuario = await entrarComo('daniel.tello@uvm.cl');
+  it('quien administra usuarios crea una persona nueva y ella puede iniciar sesión', async () => {
+    // Javier Moya administra usuarios sin ser Director: es colaborador de CPyG
+    // y además administrador, dos permisos independientes entre sí.
+    const usuario = await entrarComo('javier.moya@uvm.cl');
     const navegacion = await screen.findByRole('navigation', { name: 'Principal' });
     await usuario.click(within(navegacion).getByRole('link', { name: 'Usuarios' }));
 
@@ -228,7 +230,7 @@ describe('Recorrido de la aplicación', () => {
   });
 
   it('una cuenta desactivada no puede volver a iniciar sesión', async () => {
-    const usuario = await entrarComo('daniel.tello@uvm.cl');
+    const usuario = await entrarComo('javier.moya@uvm.cl');
     const navegacion = await screen.findByRole('navigation', { name: 'Principal' });
     await usuario.click(within(navegacion).getByRole('link', { name: 'Usuarios' }));
 
