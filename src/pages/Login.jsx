@@ -55,7 +55,7 @@ export default function Login() {
           {[
             { n: '3', t: 'áreas' },
             { n: '10', t: 'personas' },
-            { n: '4', t: 'roles' },
+            { n: '3', t: 'roles' },
           ].map((dato) => (
             <div key={dato.t}>
               <dt className="sr-only">{dato.t}</dt>
@@ -104,10 +104,11 @@ export default function Login() {
 
           {!usandoSupabase && (
           <div className="mt-8 rounded border border-line bg-surface-muted p-4">
-            <p className="text-sm font-medium text-ink">Cuentas de prueba</p>
+            <p className="text-sm font-medium text-ink">Entrar sin base de datos</p>
             <p className="mt-1 text-sm text-slate">
-              Todavía no está conectada la base de datos real. Elige una cuenta para entrar y
-              ver los permisos de cada rol.
+              Todavía no está conectada la base de datos. Los datos que veas viven solo en
+              este navegador. Elige una persona del equipo para revisar qué puede hacer
+              cada rol.
             </p>
             <ul className="mt-3 flex flex-col gap-1">
               {authService.demoAccounts().map((cuenta) => (

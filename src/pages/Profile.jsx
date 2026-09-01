@@ -5,10 +5,12 @@ import Input from '../components/Input';
 import Button from '../components/Button';
 import Badge from '../components/Badge';
 import Toast from '../components/Toast';
+import PersonAvatar from '../components/PersonAvatar';
 import { useAuth } from '../context/AuthContext';
 import { resetState } from '../services/localStore';
 import { usandoSupabase } from '../services';
 import { ROLE_LABELS } from '../lib/permissions';
+import { colorLabel } from '../lib/people';
 import { AREA_TONES } from '../lib/taskFormat';
 import { AREAS as todasLasAreas } from '../lib/areas';
 
@@ -111,6 +113,13 @@ export default function Profile() {
                 ) : (
                   <span className="text-base text-ink">Las tres áreas</span>
                 )}
+              </dd>
+            </div>
+            <div className="flex items-center justify-between gap-4 px-4 py-3">
+              <dt className="text-sm text-slate">Tu color en el tablero</dt>
+              <dd className="flex items-center gap-2 text-base text-ink">
+                <PersonAvatar profile={profile} />
+                {colorLabel(profile?.colorToken)}
               </dd>
             </div>
             <div className="flex items-baseline justify-between gap-4 px-4 py-3">

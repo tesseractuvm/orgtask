@@ -30,7 +30,7 @@ describe('Recorrido de la aplicación', () => {
 
     await usuario.type(
       await screen.findByLabelText('Correo institucional'),
-      'director@demo.orgtask.cl'
+      'daniel.tello@uvm.cl'
     );
     await usuario.type(screen.getByLabelText('Contraseña'), 'clave-equivocada');
     await usuario.click(screen.getByRole('button', { name: 'Entrar' }));
@@ -40,7 +40,7 @@ describe('Recorrido de la aplicación', () => {
   });
 
   it('el Director entra y ve las tres áreas en la navegación', async () => {
-    await entrarComo('director@demo.orgtask.cl');
+    await entrarComo('daniel.tello@uvm.cl');
 
     expect(await screen.findByRole('heading', { name: 'Las tres áreas hoy' })).toBeInTheDocument();
 
@@ -51,7 +51,7 @@ describe('Recorrido de la aplicación', () => {
   });
 
   it('el líder de CPyG ve solo su área', async () => {
-    await entrarComo('lider.cpyg@demo.orgtask.cl');
+    await entrarComo('francisca.tapia@uvm.cl');
 
     const navegacion = await screen.findByRole('navigation', { name: 'Principal' });
     expect(within(navegacion).getByRole('link', { name: 'CPyG' })).toBeInTheDocument();
@@ -60,7 +60,7 @@ describe('Recorrido de la aplicación', () => {
   });
 
   it('el tablero muestra las tres columnas con las tareas del área', async () => {
-    const usuario = await entrarComo('lider.cpyg@demo.orgtask.cl');
+    const usuario = await entrarComo('francisca.tapia@uvm.cl');
 
     const navegacion = await screen.findByRole('navigation', { name: 'Principal' });
     await usuario.click(within(navegacion).getByRole('link', { name: 'CPyG' }));
@@ -75,7 +75,7 @@ describe('Recorrido de la aplicación', () => {
   });
 
   it('el líder puede crear tareas y el colaborador no', async () => {
-    const usuario = await entrarComo('lider.cpyg@demo.orgtask.cl');
+    const usuario = await entrarComo('francisca.tapia@uvm.cl');
     const navegacion = await screen.findByRole('navigation', { name: 'Principal' });
     await usuario.click(within(navegacion).getByRole('link', { name: 'CPyG' }));
 
@@ -83,7 +83,7 @@ describe('Recorrido de la aplicación', () => {
   });
 
   it('el colaborador no recibe el botón de crear tarea', async () => {
-    const usuario = await entrarComo('colab.cpyg@demo.orgtask.cl');
+    const usuario = await entrarComo('catalina.tamayo@uvm.cl');
     const navegacion = await screen.findByRole('navigation', { name: 'Principal' });
     await usuario.click(within(navegacion).getByRole('link', { name: 'CPyG' }));
 
@@ -92,11 +92,11 @@ describe('Recorrido de la aplicación', () => {
   });
 
   it('el colaborador avanza su propia tarea de columna', async () => {
-    const usuario = await entrarComo('colab.cpyg@demo.orgtask.cl');
+    const usuario = await entrarComo('catalina.tamayo@uvm.cl');
     const navegacion = await screen.findByRole('navigation', { name: 'Principal' });
     await usuario.click(within(navegacion).getByRole('link', { name: 'CPyG' }));
 
-    // "Boletín mensual" está asignado a Paula Cárdenas, la colaboradora
+    // "Boletín mensual" está asignado a Catalina Tamayo, la colaboradora
     const avanzar = await screen.findByRole('button', {
       name: 'Avanzar Boletín mensual de la comunidad de egresados',
     });
@@ -116,11 +116,11 @@ describe('Recorrido de la aplicación', () => {
   });
 
   it('el colaborador no puede mover la tarea de otra persona', async () => {
-    const usuario = await entrarComo('colab.cpyg@demo.orgtask.cl');
+    const usuario = await entrarComo('catalina.tamayo@uvm.cl');
     const navegacion = await screen.findByRole('navigation', { name: 'Principal' });
     await usuario.click(within(navegacion).getByRole('link', { name: 'CPyG' }));
 
-    // "Actualizar base de contactos" es de Luis Herrera
+    // "Actualizar base de contactos" es de Javier Moya, el otro colaborador de CPyG
     const avanzar = await screen.findByRole('button', {
       name: 'Avanzar Actualizar base de contactos de graduados',
     });
@@ -128,7 +128,7 @@ describe('Recorrido de la aplicación', () => {
   });
 
   it('el histórico agrupa lo archivado y muestra la cronología de una tarea', async () => {
-    const usuario = await entrarComo('director@demo.orgtask.cl');
+    const usuario = await entrarComo('daniel.tello@uvm.cl');
     const navegacion = await screen.findByRole('navigation', { name: 'Principal' });
     await usuario.click(within(navegacion).getByRole('link', { name: 'Histórico' }));
 
@@ -148,11 +148,42 @@ describe('Recorrido de la aplicación', () => {
   });
 
   it('los indicadores muestran el tiempo promedio de cierre', async () => {
-    const usuario = await entrarComo('director@demo.orgtask.cl');
+    const usuario = await entrarComo('daniel.tello@uvm.cl');
     const navegacion = await screen.findByRole('navigation', { name: 'Principal' });
     await usuario.click(within(navegacion).getByRole('link', { name: 'Indicadores' }));
 
     expect(await screen.findByText('días en promedio')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Tareas cerradas por mes' })).toBeInTheDocument();
+  });
+  it('la tarjeta se identifica con el color de su responsable, no con el del área', async () => {
+    const usuario = await entrarComo('francisca.tapia@uvm.cl');
+    const navegacion = await screen.findByRole('navigation', { name: 'Principal' });
+    await usuario.click(within(navegacion).getByRole('link', { name: 'CPyG' }));
+
+    await screen.findByRole('heading', { name: 'Por hacer' });
+
+    // Dos tareas de la misma área, de personas distintas. Si el color fuera del
+    // área, ambas saldrían iguales; el brief pide que salgan distintas.
+    const tarjetaDe = (titulo) =>
+      screen.getByRole('heading', { name: titulo }).closest('article');
+
+    const deCatalina = within(
+      tarjetaDe('Boletín mensual de la comunidad de egresados')
+    ).getByTitle('Catalina Tamayo');
+    const deJavier = within(
+      tarjetaDe('Actualizar base de contactos de graduados')
+    ).getByTitle('Javier Moya');
+
+    expect(deCatalina).toHaveClass('bg-person-rosado');
+    expect(deJavier).toHaveClass('bg-person-azul');
+
+    // El color nunca va solo: la tarjeta lleva además las iniciales y el nombre
+    expect(deCatalina).toHaveTextContent('CT');
+    expect(deJavier).toHaveTextContent('JM');
+    expect(
+      within(tarjetaDe('Boletín mensual de la comunidad de egresados')).getByText(
+        'Catalina Tamayo'
+      )
+    ).toBeInTheDocument();
   });
 });

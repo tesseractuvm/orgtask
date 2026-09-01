@@ -1,4 +1,5 @@
 import { ChevronUp, ChevronDown, CalendarDays } from 'lucide-react';
+import { PERSON_TONES } from '../../lib/people';
 
 const TAREAS = [
   {
@@ -6,6 +7,7 @@ const TAREAS = [
     priority: 'Alta',
     title: 'Convenio de prácticas con empresa aliada',
     owner: 'Francisca Tapia',
+    colorToken: 'amarillo',
     due: '30 sep',
     overdue: false,
   },
@@ -14,6 +16,7 @@ const TAREAS = [
     priority: 'Media',
     title: 'Boletín mensual de la comunidad de egresados',
     owner: 'Catalina Tamayo',
+    colorToken: 'rosado',
     due: '15 sep',
     overdue: false,
   },
@@ -22,6 +25,7 @@ const TAREAS = [
     priority: 'Baja',
     title: 'Actualizar base de contactos de graduados',
     owner: 'Javier Moya',
+    colorToken: 'azul',
     due: '20 ago',
     overdue: true,
   },
@@ -40,8 +44,9 @@ export default function SignatureSection() {
       </h2>
       <p className="mt-1 max-w-2xl text-sm text-slate">
         El detalle propio de esta interfaz. Cada tarjeta lleva su orden a la izquierda,
-        en el color del área, y ahí mismo están las flechas que cambian la prioridad.
-        Las flechas solo aparecen activas para el Director y el líder del área.
+        en el color de quien responde por ella, y ahí mismo están las flechas que
+        cambian la prioridad. Las flechas solo aparecen activas para el Director y el
+        líder del área.
       </p>
 
       <ul className="mt-5 flex max-w-md flex-col gap-2">
@@ -50,23 +55,27 @@ export default function SignatureSection() {
             key={tarea.rank}
             className="flex overflow-hidden rounded border border-line bg-surface shadow-card"
           >
-            <div className="flex w-11 shrink-0 flex-col items-center justify-between border-r border-line bg-area-cpyg-soft py-1.5">
+            <div
+              className={`flex w-11 shrink-0 flex-col items-center justify-between border-r border-line py-1.5 ${PERSON_TONES[tarea.colorToken].soft}`}
+            >
               <button
                 type="button"
                 disabled={index === 0}
                 aria-label={`Subir prioridad de ${tarea.title}`}
-                className="rounded-sm p-0.5 text-area-cpyg-text transition-colors duration-150 hover:bg-area-cpyg hover:text-white disabled:text-slate-light disabled:hover:bg-transparent disabled:hover:text-slate-light"
+                className={`rounded-sm p-0.5 transition-colors duration-150 ${PERSON_TONES[tarea.colorToken].text} hover:bg-ink hover:text-white disabled:text-slate-light disabled:hover:bg-transparent disabled:hover:text-slate-light`}
               >
                 <ChevronUp aria-hidden="true" className="h-4 w-4" />
               </button>
-              <span className="font-mono text-sm font-semibold text-area-cpyg-text">
+              <span
+                className={`font-mono text-sm font-semibold ${PERSON_TONES[tarea.colorToken].text}`}
+              >
                 {tarea.rank}
               </span>
               <button
                 type="button"
                 disabled={index === TAREAS.length - 1}
                 aria-label={`Bajar prioridad de ${tarea.title}`}
-                className="rounded-sm p-0.5 text-area-cpyg-text transition-colors duration-150 hover:bg-area-cpyg hover:text-white disabled:text-slate-light disabled:hover:bg-transparent disabled:hover:text-slate-light"
+                className={`rounded-sm p-0.5 transition-colors duration-150 ${PERSON_TONES[tarea.colorToken].text} hover:bg-ink hover:text-white disabled:text-slate-light disabled:hover:bg-transparent disabled:hover:text-slate-light`}
               >
                 <ChevronDown aria-hidden="true" className="h-4 w-4" />
               </button>

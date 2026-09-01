@@ -3,6 +3,9 @@
  * documentación viva: si un color cambia aquí y en tailwind.config.js, la
  * página lo refleja sola.
  */
+import { PERSON_TONES } from '../lib/people';
+import { profiles } from './seedData';
+
 export const palette = [
   {
     name: 'ink',
@@ -65,6 +68,19 @@ export const areaTokens = [
     tone: 'deportes',
   },
 ];
+
+/**
+ * Los diez colores que identifican a las personas. Se arma desde PERSON_TONES y
+ * desde el equipo, así que la página de muestra nunca queda desfasada respecto
+ * de lo que ve el tablero.
+ */
+export const personTokens = Object.entries(PERSON_TONES).map(([token, tono]) => ({
+  token,
+  label: tono.label,
+  hex: tono.hex,
+  swatch: tono.solid,
+  quien: profiles.find((p) => p.colorToken === token)?.fullName ?? 'Sin asignar',
+}));
 
 export const typeScale = [
   { token: 'text-3xl', px: 64, use: 'Cifra protagonista de Indicadores', font: 'display' },

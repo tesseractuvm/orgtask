@@ -7,13 +7,19 @@ import {
   GripVertical,
 } from 'lucide-react';
 import PriorityRail from './PriorityRail';
+import PersonAvatar from '../PersonAvatar';
+import { personTone } from '../../lib/people';
 import { dueLabel, dueState, priorityLabel, STATUSES } from '../../lib/taskFormat';
 
 const ORDEN = STATUSES.map((s) => s.value);
 
 /**
- * Tarjeta del tablero. Muestra los seis datos que pide la infografía y solo
- * los controles que la persona tiene permitido usar.
+ * Tarjeta del tablero. Muestra los datos que pide el brief y solo los controles
+ * que la persona tiene permitido usar.
+ *
+ * El color de la tarjeta es el de quien responde por ella, nunca el de su
+ * prioridad ni el de su área. Va acompañado siempre de las iniciales y del
+ * nombre escrito, que es la regla del brief para no depender del color.
  */
 export default function TaskCard({
   task,
@@ -29,6 +35,7 @@ export default function TaskCard({
 }) {
   const posicion = ORDEN.indexOf(task.status);
   const vencimiento = dueState(task);
+  const tono = personTone(responsable);
 
   const fechaClases =
     vencimiento === 'vencida'
@@ -40,8 +47,8 @@ export default function TaskCard({
   return (
     <article className="flex overflow-hidden rounded border border-line bg-surface shadow-card">
       <PriorityRail
+        tone={tono}
         rank={rank}
-        areaCode={task.areaCode}
         taskTitle={task.title}
         canChange={permisos.puedeCambiarPrioridad}
         onChange={(direccion) => onPriority(task, direccion)}
@@ -67,7 +74,8 @@ export default function TaskCard({
           <p className="mt-1 line-clamp-2 text-sm text-slate">{task.description}</p>
         )}
 
-        <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
+        <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
+          <PersonAvatar profile={responsable} />
           <span className="text-slate-dark">{responsable?.fullName ?? 'Sin responsable'}</span>
           <span aria-hidden="true" className="text-slate-light">·</span>
           <span className="font-mono uppercase tracking-wide text-slate">

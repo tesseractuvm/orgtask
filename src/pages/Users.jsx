@@ -4,7 +4,9 @@ import Badge from '../components/Badge';
 import AccessDenied from './AccessDenied';
 import { useAuth } from '../context/AuthContext';
 import { authService } from '../services';
+import PersonAvatar from '../components/PersonAvatar';
 import { canManageUsers, ROLE_LABELS } from '../lib/permissions';
+import { colorLabel } from '../lib/people';
 import { AREA_TONES } from '../lib/taskFormat';
 
 /**
@@ -29,7 +31,7 @@ export default function Users() {
       <PageHeader
         eyebrow="Administración"
         title="Usuarios"
-        description="El equipo de la DEE con su rol y su área."
+        description="El equipo de la DEE con su rol, su área y el color que lo identifica."
       />
 
       <div className="px-5 py-6 sm:px-8">
@@ -38,7 +40,7 @@ export default function Users() {
             <caption className="sr-only">Personas con acceso a la plataforma</caption>
             <thead>
               <tr className="border-b border-line">
-                {['Nombre', 'Correo', 'Rol', 'Área'].map((columna) => (
+                {['Nombre', 'Correo', 'Rol', 'Área', 'Color'].map((columna) => (
                   <th key={columna} scope="col" className="px-4 py-2.5 text-sm font-medium text-slate">
                     {columna}
                   </th>
@@ -49,7 +51,10 @@ export default function Users() {
               {personas.map((persona) => (
                 <tr key={persona.id}>
                   <th scope="row" className="px-4 py-3 text-base font-medium text-ink">
-                    {persona.fullName}
+                    <span className="flex items-center gap-2.5">
+                      <PersonAvatar profile={persona} />
+                      {persona.fullName}
+                    </span>
                   </th>
                   <td className="px-4 py-3 font-mono text-sm text-slate">{persona.email}</td>
                   <td className="px-4 py-3 text-sm text-slate-dark">
@@ -62,6 +67,9 @@ export default function Users() {
                     ) : (
                       <span className="text-sm text-slate">Las tres</span>
                     )}
+                  </td>
+                  <td className="px-4 py-3 text-sm text-slate-dark">
+                    {colorLabel(persona.colorToken)}
                   </td>
                 </tr>
               ))}

@@ -404,6 +404,7 @@ export async function getIndicators({ actor }) {
       id: p.id,
       fullName: p.fullName,
       areaCode: p.areaCode,
+      colorToken: p.colorToken,
       abiertas: activas.filter((t) => t.assigneeId === p.id && t.status !== 'hecho').length,
     }))
     .sort((a, b) => b.abiertas - a.abiertas);

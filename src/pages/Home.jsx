@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 import PageHeader from '../components/layout/PageHeader';
+import PersonAvatar from '../components/PersonAvatar';
 import { useAuth } from '../context/AuthContext';
 import { tasksService as tareas } from '../services';
 import { visibleAreas } from '../lib/permissions';
@@ -23,7 +24,7 @@ export default function Home() {
         const atrasadas = tableros
           .flatMap((t) => [...t.por_hacer, ...t.en_proceso])
           .filter((t) => dueState(t) === 'vencida')
-          .map((t) => ({ ...t, responsable: personas[t.assigneeId]?.fullName }));
+          .map((t) => ({ ...t, responsable: personas[t.assigneeId] }));
         setVencidas(atrasadas);
       });
     });
@@ -110,7 +111,10 @@ export default function Home() {
               {vencidas.map((task) => (
                 <li key={task.id} className="flex flex-wrap items-baseline gap-x-3 gap-y-1 px-4 py-3">
                   <span className="min-w-0 flex-1 text-base text-ink">{task.title}</span>
-                  <span className="text-sm text-slate">{task.responsable ?? 'Sin responsable'}</span>
+                  <span className="inline-flex items-center gap-2 self-center text-sm text-slate">
+                    <PersonAvatar profile={task.responsable} />
+                    {task.responsable?.fullName ?? 'Sin responsable'}
+                  </span>
                   <span className="font-mono text-sm font-medium text-alert">
                     {task.areaCode}
                   </span>

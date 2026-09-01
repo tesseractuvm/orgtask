@@ -68,6 +68,50 @@ export default {
         'deportes-soft': '#F0E8E5',
         'deportes-text': '#6D4534',
       },
+
+      // Color de la persona responsable de la tarea, no del area. El brief lo
+      // fija asi: la tarjeta se lee por quien responde por ella.
+      //
+      // Cada color trae tres variantes con una funcion distinta:
+      //   solido  relleno del avatar y de la franja de la tarjeta
+      //   -soft   fondo del riel de prioridad, donde va texto oscuro
+      //   -text   la misma familia oscurecida, para texto sobre -soft o blanco
+      //
+      // Todas las combinaciones que llevan texto estan verificadas en AA:
+      // los tonos claros (amarillo, rosado, lila) llevan texto ink y el resto
+      // texto blanco. Ese dato vive en PERSON_TONES, en src/lib/people.js.
+      person: {
+        amarillo: '#F2C230',
+        'amarillo-soft': '#FBF2DA',
+        'amarillo-text': '#7A5B06',
+        rosado: '#E8A0B4',
+        'rosado-soft': '#FBEBEF',
+        'rosado-text': '#9B3350',
+        azul: '#1E63C4',
+        'azul-soft': '#E4EDFA',
+        'azul-text': '#12509F',
+        verde: '#1E7A4F',
+        'verde-soft': '#E4F1EA',
+        'verde-text': '#166043',
+        lila: '#9B7BD4',
+        'lila-soft': '#F0EAFA',
+        'lila-text': '#5F3F9E',
+        magenta: '#B5218C',
+        'magenta-soft': '#FAE6F4',
+        'magenta-text': '#8E1A6D',
+        cafe: '#6D4534',
+        'cafe-soft': '#F0E8E5',
+        'cafe-text': '#5C3A2B',
+        gris: '#6B7280',
+        'gris-soft': '#EDEFF2',
+        'gris-text': '#4B5563',
+        calipso: '#0F7C90',
+        'calipso-soft': '#E2F2F5',
+        'calipso-text': '#0B6675',
+        naranjo: '#C2551A',
+        'naranjo-soft': '#FAEBE1',
+        'naranjo-text': '#9A4314',
+      },
     },
     fontFamily: {
       display: ['"Bricolage Grotesque"', 'system-ui', 'sans-serif'],

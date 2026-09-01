@@ -46,6 +46,8 @@ export function perfilDesdeFila(fila) {
     email: fila.email,
     areaCode: fila.area_id ? codeDeArea(fila.area_id) : null,
     role: fila.role,
+    // Color con el que se identifica a la persona en el tablero
+    colorToken: fila.color_token,
     isAdmin: fila.is_admin,
     isActive: fila.is_active,
   };

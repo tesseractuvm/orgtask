@@ -5,6 +5,7 @@ import Select from '../components/Select';
 import Input from '../components/Input';
 import Button from '../components/Button';
 import Badge from '../components/Badge';
+import PersonAvatar from '../components/PersonAvatar';
 import Modal from '../components/Modal';
 import Toast from '../components/Toast';
 import EmptyState from '../components/EmptyState';
@@ -138,7 +139,8 @@ export default function History() {
                         >
                           <span className="min-w-0 flex-1 text-base text-ink">{task.title}</span>
                           <Badge tone={AREA_TONES[task.areaCode].badge}>{task.areaCode}</Badge>
-                          <span className="text-sm text-slate">
+                          <span className="inline-flex items-center gap-2 self-center text-sm text-slate">
+                            <PersonAvatar profile={personas[task.assigneeId]} />
                             {personas[task.assigneeId]?.fullName ?? 'Sin responsable'}
                           </span>
                           <span className="font-mono text-sm text-slate">

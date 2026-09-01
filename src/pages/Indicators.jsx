@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import PageHeader from '../components/layout/PageHeader';
 import BarChart from '../components/indicators/BarChart';
 import Badge from '../components/Badge';
+import PersonAvatar from '../components/PersonAvatar';
+import { personTone } from '../lib/people';
 import { useAuth } from '../context/AuthContext';
 import { tasksService as tareas } from '../services';
 import { AREA_TONES, priorityLabel, statusLabel } from '../lib/taskFormat';
@@ -149,13 +151,15 @@ export default function Indicators() {
             <ul className="mt-3 flex flex-col gap-2 rounded border border-line bg-surface p-4 shadow-card">
               {datos.cargaPorPersona.map((persona) => (
                 <li key={persona.id} className="flex items-center gap-3">
-                  <span className="w-36 shrink-0 truncate text-sm text-slate-dark">
+                  <PersonAvatar profile={persona} />
+                  <span className="w-32 shrink-0 truncate text-sm text-slate-dark">
                     {persona.fullName}
                   </span>
                   <span className="flex h-4 min-w-0 flex-1 items-center">
+                    {/* La barra lleva el color de la persona, igual que su tarjeta */}
                     <span
                       aria-hidden="true"
-                      className={`h-2 rounded-sm ${AREA_TONES[persona.areaCode].solid}`}
+                      className={`h-2 rounded-sm ${personTone(persona).solid}`}
                       style={{ width: `${(persona.abiertas / maximaCarga) * 100}%` }}
                     />
                   </span>

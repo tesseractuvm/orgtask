@@ -1,29 +1,38 @@
 -- ============================================================================
--- OrgTask · Datos de demostracion
+-- OrgTask · Equipo del piloto y trabajo de ejemplo
 --
 -- Como ejecutarlo: panel de Supabase, SQL Editor, pegar todo y correr.
--- Requiere haber corrido antes 0001_esquema_inicial.sql.
+-- Requiere haber corrido antes 0001_esquema_inicial.sql, 0002_politicas_seguridad.sql
+-- y 0003_color_por_responsable.sql.
 -- Es seguro correrlo dos veces: no duplica nada.
 --
--- ADVERTENCIA: crea 8 cuentas de prueba con nombres y correos inventados y una
--- contrasena compartida. Existen para poder verificar los permisos de cada rol
--- antes de cargar al equipo real. Hay que eliminarlas antes de usar la
--- plataforma en serio; el guion 9999_borrar_datos_demo.sql lo hace.
+-- Crea las diez cuentas del piloto definidas en el brief, con su area, su rol y
+-- el color que identifica a cada persona, mas tareas de ejemplo repartidas
+-- entre las tres areas.
 --
---   Contrasena de todas las cuentas de prueba:  OrgTaskDemo2026
+-- ADVERTENCIA: las diez cuentas quedan con una contrasena compartida, pensada
+-- solo para la puesta en marcha. Cada persona debe cambiarla desde su perfil la
+-- primera vez que entra. Mientras no lo haga, cualquiera que conozca esta
+-- contrasena puede entrar con su nombre.
 --
---   director@demo.orgtask.cl          Ana Rivas          Director, ve las 3 areas
---   lider.cpyg@demo.orgtask.cl        Marta Solis        Lider de CPyG
---   admin@demo.orgtask.cl             Luis Herrera       Colaborador CPyG + admin
---   colab.cpyg@demo.orgtask.cl        Paula Cardenas     Colaboradora de CPyG
---   lider.ryve@demo.orgtask.cl        Diego Fuentes      Lider de RyVE
---   colab.ryve@demo.orgtask.cl        Sofia Navarro      Colaboradora de RyVE
---   lider.deportes@demo.orgtask.cl    Tomas Reyes        Lider de Deportes
---   colab.deportes@demo.orgtask.cl    Camila Ortiz       Colaboradora de Deportes
+--   Contrasena inicial de todas las cuentas:  OrgTaskDemo2026
 --
--- Luis Herrera reproduce a proposito la doble condicion de Javier Moya:
--- colaborador de su area y ademas administrador de usuarios.
+--   daniel.tello@uvm.cl           Daniel Tello           Director, ve las 3 areas
+--   francisca.tapia@uvm.cl        Francisca Tapia        Lider de CPyG        amarillo
+--   catalina.tamayo@uvm.cl        Catalina Tamayo        Colaboradora CPyG    rosado
+--   javier.moya@uvm.cl            Javier Moya            Colaborador CPyG     azul
+--   juan.caneo@uvm.cl             Juan Pablo Caneo       Lider de RyVE        verde
+--   makarena.ibaceta@uvm.cl       Macarena Ibaceta       Colaboradora RyVE    lila
+--   teresa.urzua@uvm.cl           Teresita Urzua         Colaboradora RyVE    magenta
+--   jean.munoz@uvm.cl             Juan Carlos Munoz      Lider de Deportes    cafe
+--   gabriel.marschhausen@uvm.cl   Gabriel Marschhausen   Colaborador Deportes gris
+--   javiera.alvarez@uvm.cl        Javiera Alvarez        Colaboradora Deportes calipso
+--
+-- Los correos estan escritos en minuscula. El brief los lista con algunas
+-- mayusculas iniciales, pero el inicio de sesion no distingue mayusculas y la
+-- base guarda el correo en minuscula, asi que ambas formas funcionan igual.
 -- ============================================================================
+
 
 create extension if not exists pgcrypto with schema extensions;
 
@@ -57,6 +66,7 @@ create or replace function public.seed_crear_usuario_demo(
   p_full_name text,
   p_role      public.user_role,
   p_area_code text,
+  p_color     text,
   p_is_admin  boolean default false
 )
 returns uuid
@@ -140,41 +150,47 @@ begin
     );
   end if;
 
-  insert into public.profiles (id, full_name, email, area_id, role, is_admin)
-  values (v_user_id, p_full_name, lower(p_email), v_area_id, p_role, p_is_admin);
+  insert into public.profiles (id, full_name, email, area_id, role, color_token, is_admin)
+  values (v_user_id, p_full_name, lower(p_email), v_area_id, p_role, p_color, p_is_admin);
 
   return v_user_id;
 end;
 $$;
 
 revoke all on function public.seed_crear_usuario_demo(
-  text, text, text, public.user_role, text, boolean
+  text, text, text, public.user_role, text, text, boolean
 ) from public, anon, authenticated;
 
 
 select public.seed_crear_usuario_demo(
-  'director@demo.orgtask.cl', 'OrgTaskDemo2026', 'Ana Rivas', 'director', null, false
+  'daniel.tello@uvm.cl', 'OrgTaskDemo2026', 'Daniel Tello', 'director', null, 'naranjo', true
 );
 select public.seed_crear_usuario_demo(
-  'lider.cpyg@demo.orgtask.cl', 'OrgTaskDemo2026', 'Marta Solis', 'lider', 'CPYG', false
+  'francisca.tapia@uvm.cl', 'OrgTaskDemo2026', 'Francisca Tapia', 'lider', 'CPYG', 'amarillo'
 );
 select public.seed_crear_usuario_demo(
-  'admin@demo.orgtask.cl', 'OrgTaskDemo2026', 'Luis Herrera', 'colaborador', 'CPYG', true
+  'catalina.tamayo@uvm.cl', 'OrgTaskDemo2026', 'Catalina Tamayo', 'colaborador', 'CPYG', 'rosado'
 );
 select public.seed_crear_usuario_demo(
-  'colab.cpyg@demo.orgtask.cl', 'OrgTaskDemo2026', 'Paula Cardenas', 'colaborador', 'CPYG', false
+  'javier.moya@uvm.cl', 'OrgTaskDemo2026', 'Javier Moya', 'colaborador', 'CPYG', 'azul'
 );
 select public.seed_crear_usuario_demo(
-  'lider.ryve@demo.orgtask.cl', 'OrgTaskDemo2026', 'Diego Fuentes', 'lider', 'RYVE', false
+  'juan.caneo@uvm.cl', 'OrgTaskDemo2026', 'Juan Pablo Caneo', 'lider', 'RYVE', 'verde'
 );
 select public.seed_crear_usuario_demo(
-  'colab.ryve@demo.orgtask.cl', 'OrgTaskDemo2026', 'Sofia Navarro', 'colaborador', 'RYVE', false
+  'makarena.ibaceta@uvm.cl', 'OrgTaskDemo2026', 'Macarena Ibaceta', 'colaborador', 'RYVE', 'lila'
 );
 select public.seed_crear_usuario_demo(
-  'lider.deportes@demo.orgtask.cl', 'OrgTaskDemo2026', 'Tomas Reyes', 'lider', 'DEPORTES', false
+  'teresa.urzua@uvm.cl', 'OrgTaskDemo2026', 'Teresita Urzua', 'colaborador', 'RYVE', 'magenta'
 );
 select public.seed_crear_usuario_demo(
-  'colab.deportes@demo.orgtask.cl', 'OrgTaskDemo2026', 'Camila Ortiz', 'colaborador', 'DEPORTES', false
+  'jean.munoz@uvm.cl', 'OrgTaskDemo2026', 'Juan Carlos Munoz', 'lider', 'DEPORTES', 'cafe'
+);
+select public.seed_crear_usuario_demo(
+  'gabriel.marschhausen@uvm.cl', 'OrgTaskDemo2026', 'Gabriel Marschhausen', 'colaborador', 'DEPORTES', 'gris'
+);
+select public.seed_crear_usuario_demo(
+  'javiera.alvarez@uvm.cl', 'OrgTaskDemo2026', 'Javiera Alvarez', 'colaborador', 'DEPORTES', 'calipso'
 );
 
 
@@ -197,58 +213,58 @@ insert into public.tasks (
  (select id from public.areas where code = 'CPYG'),
  'Convenio de practicas con empresa aliada',
  'Cerrar el convenio para que los estudiantes de ultimo ano postulen a practicas con la empresa.',
- (select id from public.profiles where email = 'lider.cpyg@demo.orgtask.cl'),
+ (select id from public.profiles where email = 'francisca.tapia@uvm.cl'),
  'alta', 'en_proceso', 1000, '2026-09-30',
- (select id from public.profiles where email = 'lider.cpyg@demo.orgtask.cl'),
+ (select id from public.profiles where email = 'francisca.tapia@uvm.cl'),
  '2026-08-05 10:15:00-04', null, null, null),
 
 ('b1000002-0000-4000-8000-000000000002',
  (select id from public.areas where code = 'CPYG'),
  'Boletin mensual de la comunidad de egresados',
  'Armar el numero de septiembre con dos entrevistas y la agenda de actividades.',
- (select id from public.profiles where email = 'colab.cpyg@demo.orgtask.cl'),
+ (select id from public.profiles where email = 'catalina.tamayo@uvm.cl'),
  'media', 'por_hacer', 1000, '2026-09-15',
- (select id from public.profiles where email = 'lider.cpyg@demo.orgtask.cl'),
+ (select id from public.profiles where email = 'francisca.tapia@uvm.cl'),
  '2026-08-18 09:00:00-04', null, null, null),
 
 ('b1000003-0000-4000-8000-000000000003',
  (select id from public.areas where code = 'CPYG'),
  'Actualizar base de contactos de graduados',
  'Depurar correos rebotados y sumar a los titulados del semestre pasado.',
- (select id from public.profiles where email = 'admin@demo.orgtask.cl'),
+ (select id from public.profiles where email = 'javier.moya@uvm.cl'),
  'baja', 'por_hacer', 1000, '2026-08-20',
- (select id from public.profiles where email = 'lider.cpyg@demo.orgtask.cl'),
+ (select id from public.profiles where email = 'francisca.tapia@uvm.cl'),
  '2026-07-28 16:40:00-04', null, null, null),
 
 ('b1000004-0000-4000-8000-000000000004',
  (select id from public.areas where code = 'CPYG'),
  'Encuentro de networking para profesionales',
  'Encuentro con 60 egresados en el campus, con mesas por area de desempeno.',
- (select id from public.profiles where email = 'lider.cpyg@demo.orgtask.cl'),
+ (select id from public.profiles where email = 'francisca.tapia@uvm.cl'),
  'alta', 'hecho', 1000, '2026-08-10',
- (select id from public.profiles where email = 'lider.cpyg@demo.orgtask.cl'),
+ (select id from public.profiles where email = 'francisca.tapia@uvm.cl'),
  '2026-06-15 11:00:00-04', '2026-08-12 18:30:00-04',
  '2026-08-20 09:15:00-04',
- (select id from public.profiles where email = 'lider.cpyg@demo.orgtask.cl')),
+ (select id from public.profiles where email = 'francisca.tapia@uvm.cl')),
 
 ('b1000005-0000-4000-8000-000000000005',
  (select id from public.areas where code = 'CPYG'),
  'Charla de empleabilidad con egresados de Ingenieria',
  'Panel de tres egresados sobre primeros empleos y expectativas de renta.',
- (select id from public.profiles where email = 'colab.cpyg@demo.orgtask.cl'),
+ (select id from public.profiles where email = 'catalina.tamayo@uvm.cl'),
  'media', 'hecho', 2000, '2026-07-20',
- (select id from public.profiles where email = 'lider.cpyg@demo.orgtask.cl'),
+ (select id from public.profiles where email = 'francisca.tapia@uvm.cl'),
  '2026-06-01 14:20:00-04', '2026-07-22 17:00:00-04',
  '2026-07-30 10:00:00-04',
- (select id from public.profiles where email = 'lider.cpyg@demo.orgtask.cl')),
+ (select id from public.profiles where email = 'francisca.tapia@uvm.cl')),
 
 ('b1000006-0000-4000-8000-000000000006',
  (select id from public.areas where code = 'CPYG'),
  'Programa de mentorias entre egresados y estudiantes',
  'Emparejar 20 duplas y dejar agendada la primera sesion de cada una.',
- (select id from public.profiles where email = 'colab.cpyg@demo.orgtask.cl'),
+ (select id from public.profiles where email = 'catalina.tamayo@uvm.cl'),
  'alta', 'en_proceso', 2000, '2026-10-15',
- (select id from public.profiles where email = 'lider.cpyg@demo.orgtask.cl'),
+ (select id from public.profiles where email = 'francisca.tapia@uvm.cl'),
  '2026-08-01 08:45:00-04', null, null, null),
 
 -- ---------- RyVE ----------
@@ -256,98 +272,98 @@ insert into public.tasks (
  (select id from public.areas where code = 'RYVE'),
  'Feria de bienvenida para estudiantes nuevos',
  'Coordinar stands de las carreras y el punto de informacion de beneficios.',
- (select id from public.profiles where email = 'lider.ryve@demo.orgtask.cl'),
+ (select id from public.profiles where email = 'juan.caneo@uvm.cl'),
  'alta', 'en_proceso', 1000, '2026-09-05',
- (select id from public.profiles where email = 'lider.ryve@demo.orgtask.cl'),
+ (select id from public.profiles where email = 'juan.caneo@uvm.cl'),
  '2026-08-10 09:30:00-04', null, null, null),
 
 ('b2000002-0000-4000-8000-000000000012',
  (select id from public.areas where code = 'RYVE'),
  'Taller de habilidades blandas para primer ano',
  'Dos sesiones de trabajo en equipo y comunicacion, con cupo para 40 personas.',
- (select id from public.profiles where email = 'colab.ryve@demo.orgtask.cl'),
+ (select id from public.profiles where email = 'teresa.urzua@uvm.cl'),
  'media', 'por_hacer', 1000, '2026-09-22',
- (select id from public.profiles where email = 'lider.ryve@demo.orgtask.cl'),
+ (select id from public.profiles where email = 'juan.caneo@uvm.cl'),
  '2026-08-20 15:10:00-04', null, null, null),
 
 ('b2000003-0000-4000-8000-000000000013',
  (select id from public.areas where code = 'RYVE'),
  'Encuesta de satisfaccion estudiantil semestral',
  'Aplicar la encuesta y entregar el informe con los tres hallazgos principales.',
- (select id from public.profiles where email = 'colab.ryve@demo.orgtask.cl'),
+ (select id from public.profiles where email = 'makarena.ibaceta@uvm.cl'),
  'media', 'hecho', 1000, '2026-08-08',
- (select id from public.profiles where email = 'lider.ryve@demo.orgtask.cl'),
+ (select id from public.profiles where email = 'juan.caneo@uvm.cl'),
  '2026-07-01 10:00:00-04', '2026-08-05 12:45:00-04', null, null),
 
 ('b2000004-0000-4000-8000-000000000014',
  (select id from public.areas where code = 'RYVE'),
  'Convenio con centro de estudiantes para uso de salas',
  'Acordar horarios de uso de las salas de reunion del edificio central.',
- (select id from public.profiles where email = 'lider.ryve@demo.orgtask.cl'),
+ (select id from public.profiles where email = 'juan.caneo@uvm.cl'),
  'baja', 'por_hacer', 2000, '2026-08-25',
- (select id from public.profiles where email = 'lider.ryve@demo.orgtask.cl'),
+ (select id from public.profiles where email = 'juan.caneo@uvm.cl'),
  '2026-08-01 11:25:00-04', null, null, null),
 
 ('b2000005-0000-4000-8000-000000000015',
  (select id from public.areas where code = 'RYVE'),
  'Ciclo de cine y conversatorio de mitad de semestre',
  'Tres funciones con conversatorio guiado por docentes invitados.',
- (select id from public.profiles where email = 'colab.ryve@demo.orgtask.cl'),
+ (select id from public.profiles where email = 'teresa.urzua@uvm.cl'),
  'baja', 'hecho', 2000, '2026-06-30',
- (select id from public.profiles where email = 'lider.ryve@demo.orgtask.cl'),
+ (select id from public.profiles where email = 'juan.caneo@uvm.cl'),
  '2026-05-20 16:00:00-04', '2026-06-28 20:15:00-04',
  '2026-07-02 09:40:00-04',
- (select id from public.profiles where email = 'lider.ryve@demo.orgtask.cl')),
+ (select id from public.profiles where email = 'juan.caneo@uvm.cl')),
 
 -- ---------- Deportes ----------
 ('b3000001-0000-4000-8000-000000000021',
  (select id from public.areas where code = 'DEPORTES'),
  'Campeonato interno de futbolito',
  'Doce equipos, fase de grupos y final. Falta confirmar arbitros.',
- (select id from public.profiles where email = 'lider.deportes@demo.orgtask.cl'),
+ (select id from public.profiles where email = 'jean.munoz@uvm.cl'),
  'alta', 'en_proceso', 1000, '2026-09-12',
- (select id from public.profiles where email = 'lider.deportes@demo.orgtask.cl'),
+ (select id from public.profiles where email = 'jean.munoz@uvm.cl'),
  '2026-08-08 08:20:00-04', null, null, null),
 
 ('b3000002-0000-4000-8000-000000000022',
  (select id from public.areas where code = 'DEPORTES'),
  'Renovacion de implementacion deportiva',
  'Cotizar balones, petos y conos para el segundo semestre.',
- (select id from public.profiles where email = 'colab.deportes@demo.orgtask.cl'),
+ (select id from public.profiles where email = 'gabriel.marschhausen@uvm.cl'),
  'alta', 'por_hacer', 1000, '2026-09-01',
- (select id from public.profiles where email = 'lider.deportes@demo.orgtask.cl'),
+ (select id from public.profiles where email = 'jean.munoz@uvm.cl'),
  '2026-08-22 10:50:00-04', null, null, null),
 
 ('b3000003-0000-4000-8000-000000000023',
  (select id from public.areas where code = 'DEPORTES'),
  'Seleccion de voleibol femenino para liga interuniversitaria',
  'Convocatoria, dos jornadas de seleccion y nomina final de 14 jugadoras.',
- (select id from public.profiles where email = 'colab.deportes@demo.orgtask.cl'),
+ (select id from public.profiles where email = 'javiera.alvarez@uvm.cl'),
  'media', 'por_hacer', 1000, '2026-10-03',
- (select id from public.profiles where email = 'lider.deportes@demo.orgtask.cl'),
+ (select id from public.profiles where email = 'jean.munoz@uvm.cl'),
  '2026-08-15 09:05:00-04', null, null, null),
 
 ('b3000004-0000-4000-8000-000000000024',
  (select id from public.areas where code = 'DEPORTES'),
  'Torneo de tenis de mesa de invierno',
  'Torneo de 32 participantes en el gimnasio, categoria unica.',
- (select id from public.profiles where email = 'lider.deportes@demo.orgtask.cl'),
+ (select id from public.profiles where email = 'jean.munoz@uvm.cl'),
  'baja', 'hecho', 1000, '2026-07-18',
- (select id from public.profiles where email = 'lider.deportes@demo.orgtask.cl'),
+ (select id from public.profiles where email = 'jean.munoz@uvm.cl'),
  '2026-06-10 13:30:00-04', '2026-07-15 19:00:00-04',
  '2026-07-20 08:30:00-04',
- (select id from public.profiles where email = 'lider.deportes@demo.orgtask.cl')),
+ (select id from public.profiles where email = 'jean.munoz@uvm.cl')),
 
 ('b3000005-0000-4000-8000-000000000025',
  (select id from public.areas where code = 'DEPORTES'),
  'Convenio con gimnasio municipal para estudiantes',
  'Tarifa preferente acreditando matricula vigente.',
- (select id from public.profiles where email = 'colab.deportes@demo.orgtask.cl'),
+ (select id from public.profiles where email = 'javiera.alvarez@uvm.cl'),
  'media', 'hecho', 2000, '2026-06-05',
- (select id from public.profiles where email = 'lider.deportes@demo.orgtask.cl'),
+ (select id from public.profiles where email = 'jean.munoz@uvm.cl'),
  '2026-04-20 15:45:00-04', '2026-05-30 11:20:00-04',
  '2026-06-05 09:00:00-04',
- (select id from public.profiles where email = 'lider.deportes@demo.orgtask.cl'))
+ (select id from public.profiles where email = 'jean.munoz@uvm.cl'))
 
 on conflict (id) do nothing;
 
@@ -431,7 +447,7 @@ $$;
 -- ----------------------------------------------------------------------------
 
 drop function if exists public.seed_crear_usuario_demo(
-  text, text, text, public.user_role, text, boolean
+  text, text, text, public.user_role, text, text, boolean
 );
 
 
