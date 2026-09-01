@@ -58,7 +58,28 @@ export default defineConfig(({ mode, command }) => {
   const pareceSecreta = /sb_secret_|service_role/i.test(clave.valor);
   const claveFinal = pareceSecreta ? '' : clave.valor;
 
+  // Cualquier variable con prefijo VITE_ puede terminar dentro del archivo que
+  // descarga el navegador: basta con que una linea del codigo la nombre. Una
+  // clave de servicio ahi es acceso total a la base para cualquiera que abra la
+  // pagina, asi que si aparece una, se avisa fuerte aunque hoy no se use.
+  const secretasExpuestas = Object.entries(entorno)
+    .filter(
+      ([nombre, valor]) =>
+        nombre.startsWith('VITE_') && /sb_secret_|service_role/i.test(`${nombre} ${valor}`)
+    )
+    .map(([nombre]) => nombre);
+
   if (command === 'build') {
+    if (secretasExpuestas.length > 0) {
+      console.warn(
+        '\n[OrgTask] ATENCION: %s lleva el prefijo VITE_ y parece una clave de servicio.\n' +
+          '          Ese prefijo existe para entregarle variables al navegador. La clave de\n' +
+          '          servicio se salta todas las politicas RLS: es acceso total a la base.\n' +
+          '          Esta compilacion no la incluye, pero borrala de Vercel y rotala en\n' +
+          '          Supabase. El frontend nunca la necesita.\n',
+        secretasExpuestas.join(', ')
+      );
+    }
     if (pareceSecreta) {
       console.warn(
         '\n[OrgTask] La clave encontrada en %s parece ser la clave de servicio. ' +
