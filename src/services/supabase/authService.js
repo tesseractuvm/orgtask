@@ -105,3 +105,60 @@ export async function listProfiles() {
 export function demoAccounts() {
   return [];
 }
+
+/**
+ * Las dos únicas escrituras que necesitan la clave privilegiada: crear una
+ * cuenta y activarla o desactivarla. Viven en la función de Supabase
+ * `admin-users`, nunca en el navegador. Esta llamada manda el token de la
+ * sesión actual solo para que la función sepa quién pide la acción; el
+ * permiso de verdad se comprueba allá, no acá.
+ */
+async function llamarAdminUsers(action, payload) {
+  const { data, error } = await supabase.functions.invoke('admin-users', {
+    body: { action, ...payload },
+  });
+
+  if (error) {
+    let mensaje = 'No se pudo completar la acción.';
+    if (error.context && typeof error.context.json === 'function') {
+      try {
+        const cuerpo = await error.context.json();
+        mensaje = cuerpo?.error ?? mensaje;
+      } catch {
+        // El cuerpo del error no era JSON: se deja el mensaje por defecto
+      }
+    } else if (error.message) {
+      mensaje = error.message;
+    }
+    throw new Error(mensaje);
+  }
+  if (data?.error) throw new Error(data.error);
+  return data;
+}
+
+/** Alta de una persona nueva. La contraseña la define quien administra
+ * usuarios y se la comunica aparte: no hay envío de correo. */
+export async function createProfile({
+  fullName,
+  email,
+  areaCode,
+  role,
+  colorToken,
+  isAdmin,
+  password,
+}) {
+  return llamarAdminUsers('create', {
+    fullName,
+    email,
+    areaCode: role === 'director' ? null : areaCode,
+    role,
+    colorToken,
+    isAdmin: Boolean(isAdmin),
+    password,
+  });
+}
+
+/** Activar o desactivar una cuenta. Nunca se borra a nadie. */
+export async function setProfileActive({ profileId, isActive }) {
+  return llamarAdminUsers('setActive', { userId: profileId, isActive: Boolean(isActive) });
+}

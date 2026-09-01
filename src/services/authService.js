@@ -8,6 +8,7 @@
  */
 import { DEMO_PASSWORD } from '../data/seedData';
 import { readState, updateState } from './localStore';
+import { canManageUsers } from '../lib/permissions';
 
 const espera = (ms = 220) => new Promise((r) => setTimeout(r, ms));
 
@@ -17,8 +18,16 @@ export async function signInWithPassword({ email, password }) {
   const correo = String(email ?? '').trim().toLowerCase();
   const perfil = readState().profiles.find((p) => p.email.toLowerCase() === correo);
 
-  if (!perfil || password !== DEMO_PASSWORD) {
+  // Las cuentas del seed comparten la clave de demostración. Una cuenta creada
+  // desde Usuarios guarda la suya propia, igual que haría Supabase Auth.
+  const claveValida =
+    perfil && (perfil.password ? password === perfil.password : password === DEMO_PASSWORD);
+
+  if (!perfil || !claveValida) {
     throw new Error('Correo o contraseña incorrectos. Revisa e inténtalo de nuevo.');
+  }
+  if (perfil.isActive === false) {
+    throw new Error('Tu cuenta está desactivada. Contacta a quien administra usuarios.');
   }
 
   updateState({ session: { profileId: perfil.id, startedAt: new Date().toISOString() } });
@@ -61,13 +70,15 @@ export async function listProfiles() {
 
 /** Solo para la pantalla de ingreso mientras usamos cuentas de ejemplo. */
 export function demoAccounts() {
-  return readState().profiles.map((p) => ({
-    email: p.email,
-    fullName: p.fullName,
-    role: p.role,
-    areaCode: p.areaCode,
-    isAdmin: p.isAdmin,
-  }));
+  return readState()
+    .profiles.filter((p) => p.isActive !== false)
+    .map((p) => ({
+      email: p.email,
+      fullName: p.fullName,
+      role: p.role,
+      areaCode: p.areaCode,
+      isAdmin: p.isAdmin,
+    }));
 }
 
 /**
@@ -82,4 +93,82 @@ export async function updatePassword(newPassword) {
   throw new Error(
     'El cambio de contraseña necesita la conexión con Supabase. Mientras se usan cuentas de prueba, la contraseña es fija.'
   );
+}
+
+/**
+ * Alta de una persona nueva. Solo la hace quien administra usuarios: crea la
+ * cuenta con una contraseña temporal que decide en el momento, y se la
+ * comunica aparte, fuera de la aplicación. No hay envío de correo.
+ */
+export async function createProfile({
+  fullName,
+  email,
+  areaCode,
+  role,
+  colorToken,
+  isAdmin,
+  password,
+  actor,
+}) {
+  await espera(220);
+  if (!canManageUsers(actor)) {
+    throw new Error('Solo quien administra usuarios puede agregar personas.');
+  }
+
+  const correo = String(email ?? '').trim().toLowerCase();
+  const nombre = String(fullName ?? '').trim();
+
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(correo)) {
+    throw new Error('El correo no tiene un formato válido.');
+  }
+  if (nombre.length < 3) {
+    throw new Error('El nombre debe tener al menos 3 caracteres.');
+  }
+  if (String(password ?? '').length < 8) {
+    throw new Error('La contraseña debe tener al menos 8 caracteres.');
+  }
+  if (role === 'director' && areaCode) {
+    throw new Error('El Director no pertenece a un área.');
+  }
+  if (role !== 'director' && !areaCode) {
+    throw new Error('Elige un área para este rol.');
+  }
+
+  const estado = readState();
+  if (estado.profiles.some((p) => p.email.toLowerCase() === correo)) {
+    throw new Error('Ya existe una cuenta con ese correo.');
+  }
+
+  const nuevo = {
+    id: `u-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+    fullName: nombre,
+    email: correo,
+    areaCode: role === 'director' ? null : areaCode,
+    role,
+    colorToken,
+    isAdmin: Boolean(isAdmin),
+    isActive: true,
+    // Solo existe en este modo local, para que la cuenta nueva pueda iniciar
+    // sesión. Supabase Auth guarda la contraseña cifrada en su propia tabla;
+    // acá no hay dónde más ponerla.
+    password: String(password),
+  };
+
+  updateState({ profiles: [...estado.profiles, nuevo] });
+  return nuevo;
+}
+
+/** Activar o desactivar una cuenta. Nunca se borra a nadie. */
+export async function setProfileActive({ profileId, isActive, actor }) {
+  await espera(160);
+  if (!canManageUsers(actor)) {
+    throw new Error('Solo quien administra usuarios puede activar o desactivar cuentas.');
+  }
+
+  const estado = readState();
+  const profiles = estado.profiles.map((p) =>
+    p.id === profileId ? { ...p, isActive: Boolean(isActive) } : p
+  );
+  updateState({ profiles });
+  return profiles.find((p) => p.id === profileId);
 }

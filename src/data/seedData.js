@@ -27,6 +27,7 @@ export const profiles = [
     role: 'director',
     colorToken: 'naranjo',
     isAdmin: true,
+    isActive: true,
   },
 
   // ---------- CPyG ----------
@@ -38,6 +39,7 @@ export const profiles = [
     role: 'lider',
     colorToken: 'amarillo',
     isAdmin: false,
+    isActive: true,
   },
   {
     id: 'u-catalina-tamayo',
@@ -47,6 +49,7 @@ export const profiles = [
     role: 'colaborador',
     colorToken: 'rosado',
     isAdmin: false,
+    isActive: true,
   },
   {
     id: 'u-javier-moya',
@@ -56,6 +59,7 @@ export const profiles = [
     role: 'colaborador',
     colorToken: 'azul',
     isAdmin: false,
+    isActive: true,
   },
 
   // ---------- RyVE ----------
@@ -67,6 +71,7 @@ export const profiles = [
     role: 'lider',
     colorToken: 'verde',
     isAdmin: false,
+    isActive: true,
   },
   {
     id: 'u-macarena-ibaceta',
@@ -76,6 +81,7 @@ export const profiles = [
     role: 'colaborador',
     colorToken: 'lila',
     isAdmin: false,
+    isActive: true,
   },
   {
     id: 'u-teresita-urzua',
@@ -85,6 +91,7 @@ export const profiles = [
     role: 'colaborador',
     colorToken: 'magenta',
     isAdmin: false,
+    isActive: true,
   },
 
   // ---------- Unidad de Deportes ----------
@@ -96,6 +103,7 @@ export const profiles = [
     role: 'lider',
     colorToken: 'cafe',
     isAdmin: false,
+    isActive: true,
   },
   {
     id: 'u-gabriel-marschhausen',
@@ -105,6 +113,7 @@ export const profiles = [
     role: 'colaborador',
     colorToken: 'gris',
     isAdmin: false,
+    isActive: true,
   },
   {
     id: 'u-javiera-alvarez',
@@ -114,6 +123,7 @@ export const profiles = [
     role: 'colaborador',
     colorToken: 'calipso',
     isAdmin: false,
+    isActive: true,
   },
 ];
 

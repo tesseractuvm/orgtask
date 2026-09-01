@@ -186,4 +186,69 @@ describe('Recorrido de la aplicación', () => {
       )
     ).toBeInTheDocument();
   });
+  it('el Director crea una persona nueva y ella puede iniciar sesión', async () => {
+    const usuario = await entrarComo('daniel.tello@uvm.cl');
+    const navegacion = await screen.findByRole('navigation', { name: 'Principal' });
+    await usuario.click(within(navegacion).getByRole('link', { name: 'Usuarios' }));
+
+    await usuario.click(await screen.findByRole('button', { name: 'Agregar persona' }));
+
+    const dialogo = await screen.findByRole('dialog');
+    await usuario.type(within(dialogo).getByLabelText('Nombre completo'), 'Persona Nueva');
+    await usuario.type(
+      within(dialogo).getByLabelText('Correo institucional'),
+      'persona.nueva@uvm.cl'
+    );
+    await usuario.selectOptions(within(dialogo).getByLabelText('Rol'), 'colaborador');
+    await usuario.selectOptions(within(dialogo).getByLabelText('Área'), 'CPYG');
+    await usuario.selectOptions(within(dialogo).getByLabelText('Color de identificación'), 'gris');
+
+    const claveGenerada = within(dialogo).getByLabelText('Contraseña temporal').value;
+    expect(claveGenerada.length).toBeGreaterThanOrEqual(8);
+
+    await usuario.click(within(dialogo).getByRole('button', { name: 'Crear cuenta' }));
+
+    // Tras crearla, la pantalla se queda mostrando el correo y la clave: es la
+    // única vez que la contraseña se puede ver.
+    const confirmacion = await screen.findByRole('dialog', { name: 'Cuenta creada' });
+    expect(within(confirmacion).getByText('persona.nueva@uvm.cl')).toBeInTheDocument();
+    expect(within(confirmacion).getByText(claveGenerada)).toBeInTheDocument();
+    await usuario.click(within(confirmacion).getByRole('button', { name: 'Entendido, cerrar' }));
+
+    expect(await screen.findByText('Persona Nueva')).toBeInTheDocument();
+
+    // La cuenta recién creada ya puede entrar, con la clave que se generó
+    await usuario.click(screen.getByRole('button', { name: 'Cerrar sesión' }));
+    await screen.findByLabelText('Correo institucional');
+    await usuario.type(screen.getByLabelText('Correo institucional'), 'persona.nueva@uvm.cl');
+    await usuario.type(screen.getByLabelText('Contraseña'), claveGenerada);
+    await usuario.click(screen.getByRole('button', { name: 'Entrar' }));
+
+    await screen.findByText(/Hola, Persona/);
+  });
+
+  it('una cuenta desactivada no puede volver a iniciar sesión', async () => {
+    const usuario = await entrarComo('daniel.tello@uvm.cl');
+    const navegacion = await screen.findByRole('navigation', { name: 'Principal' });
+    await usuario.click(within(navegacion).getByRole('link', { name: 'Usuarios' }));
+
+    const fila = (await screen.findByText('Francisca Tapia')).closest('tr');
+    await usuario.click(within(fila).getByRole('button', { name: /Desactivar a Francisca Tapia/ }));
+
+    await screen.findByText('Desactivada');
+
+    await usuario.click(screen.getByRole('button', { name: 'Cerrar sesión' }));
+    await screen.findByLabelText('Correo institucional');
+    await usuario.type(screen.getByLabelText('Correo institucional'), 'francisca.tapia@uvm.cl');
+    await usuario.type(screen.getByLabelText('Contraseña'), DEMO_PASSWORD);
+    await usuario.click(screen.getByRole('button', { name: 'Entrar' }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(/desactivada/i);
+  });
+
+  it('un colaborador no ve la sección de Usuarios', async () => {
+    await entrarComo('catalina.tamayo@uvm.cl');
+    const navegacion = await screen.findByRole('navigation', { name: 'Principal' });
+    expect(within(navegacion).queryByRole('link', { name: 'Usuarios' })).not.toBeInTheDocument();
+  });
 });
