@@ -79,11 +79,26 @@ function initialState() {
 
 let cache = null;
 
+/**
+ * Devuelve el almacén del navegador, o null si no hay ninguno disponible.
+ *
+ * No siempre existe: el modo privado de algunos navegadores lo bloquea, y en el
+ * entorno de pruebas puede no estar. Cuando falta, la aplicación sigue
+ * funcionando solo en memoria durante la sesión en vez de romperse.
+ */
+function almacen() {
+  try {
+    return window.localStorage ?? null;
+  } catch {
+    return null;
+  }
+}
+
 export function readState() {
   if (cache) return cache;
 
   try {
-    const guardado = window.localStorage.getItem(STORAGE_KEY);
+    const guardado = almacen()?.getItem(STORAGE_KEY);
     cache = guardado ? JSON.parse(guardado) : initialState();
   } catch {
     // Si el contenido guardado está corrupto, se parte de cero en vez de fallar
@@ -95,7 +110,7 @@ export function readState() {
 export function writeState(siguiente) {
   cache = siguiente;
   try {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(siguiente));
+    almacen()?.setItem(STORAGE_KEY, JSON.stringify(siguiente));
   } catch {
     // Sin espacio o en modo privado: la sesión sigue funcionando en memoria
   }
@@ -109,7 +124,11 @@ export function updateState(cambio) {
 /** Vuelve a los datos de ejemplo. Lo usa el botón de reinicio del perfil. */
 export function resetState() {
   cache = null;
-  window.localStorage.removeItem(STORAGE_KEY);
+  try {
+    almacen()?.removeItem(STORAGE_KEY);
+  } catch {
+    // Igual que al guardar: sin almacén se vuelve a los datos de ejemplo en memoria
+  }
   return readState();
 }
 
