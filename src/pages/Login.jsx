@@ -73,6 +73,20 @@ export default function Login() {
           <h2 className="text-xl">Iniciar sesión</h2>
           <p className="mt-1 text-base text-slate">Usa tu correo institucional.</p>
 
+          {/*
+            De dónde salen los datos. Sin esto no hay forma de distinguir a
+            simple vista una aplicación conectada a Supabase de una que quedó
+            funcionando sola en el navegador, y las dos rechazan un correo
+            desconocido con el mismo mensaje.
+          */}
+          <p className="mt-3 inline-flex items-center gap-2 rounded border border-line bg-surface-muted px-2.5 py-1.5 font-mono text-sm text-slate">
+            <span
+              aria-hidden="true"
+              className={`h-2 w-2 rounded-full ${usandoSupabase ? 'bg-ok' : 'bg-slate-light'}`}
+            />
+            {usandoSupabase ? 'Conectado a Supabase' : 'Sin base de datos · solo este navegador'}
+          </p>
+
           <form onSubmit={enviar} className="mt-6 flex flex-col gap-4" noValidate>
             <Input
               label="Correo institucional"

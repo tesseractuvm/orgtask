@@ -8,7 +8,28 @@
  */
 import { areas, profiles, tasks as seedTasks } from '../data/seedData';
 
-const STORAGE_KEY = 'orgtask.estado.v1';
+/**
+ * La version va en el nombre de la clave a proposito.
+ *
+ * El estado guardado en el navegador manda sobre los datos de ejemplo: si hay
+ * algo guardado, se usa eso y seedData.js ni se mira. Eso esta bien mientras el
+ * equipo no cambie, pero cuando cambia (como al pasar de las cuentas inventadas
+ * al equipo real del piloto), un navegador que ya habia abierto la aplicacion
+ * se queda con la lista antigua para siempre, y las personas nuevas no pueden
+ * iniciar sesion porque para ese navegador no existen.
+ *
+ * Al subir la version, el estado viejo se ignora y se vuelve a partir de los
+ * datos de ejemplo actuales. Hay que subirla cada vez que cambie la forma o el
+ * contenido de seedData.js.
+ */
+const STORAGE_VERSION = 2;
+const STORAGE_KEY = `orgtask.estado.v${STORAGE_VERSION}`;
+
+/** Claves de versiones anteriores, para no dejar basura en el navegador. */
+const CLAVES_ANTIGUAS = Array.from(
+  { length: STORAGE_VERSION - 1 },
+  (_, i) => `orgtask.estado.v${i + 1}`
+);
 
 /**
  * Reconstruye la cronología de las tareas de ejemplo con fechas coherentes,
@@ -98,6 +119,10 @@ export function readState() {
   if (cache) return cache;
 
   try {
+    // El estado de versiones anteriores ya no sirve: se borra en vez de dejarlo
+    // ocupando espacio en el navegador de cada persona.
+    for (const clave of CLAVES_ANTIGUAS) almacen()?.removeItem(clave);
+
     const guardado = almacen()?.getItem(STORAGE_KEY);
     cache = guardado ? JSON.parse(guardado) : initialState();
   } catch {
