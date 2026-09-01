@@ -23,8 +23,19 @@ export async function signInWithPassword({ email, password }) {
   const claveValida =
     perfil && (perfil.password ? password === perfil.password : password === DEMO_PASSWORD);
 
-  if (!perfil || !claveValida) {
-    throw new Error('Correo o contraseña incorrectos. Revisa e inténtalo de nuevo.');
+  // Aqui los dos casos se distinguen a proposito, al reves de lo que haria un
+  // sistema de verdad. Este modo no protege nada: los datos son de ejemplo y
+  // viven solo en este navegador, asi que no hay cuentas que proteger de quien
+  // ande probando correos. Lo que si hace falta es que, cuando la aplicacion
+  // quedo sin conectar a Supabase por error, el mensaje lo diga en vez de
+  // parecerse al de una contraseña equivocada.
+  if (!perfil) {
+    throw new Error(
+      `Esta copia de OrgTask no está conectada a la base de datos: funciona con datos de ejemplo guardados en este navegador, y ahí no existe ninguna cuenta con el correo ${correo}.`
+    );
+  }
+  if (!claveValida) {
+    throw new Error('La contraseña no coincide con la de esta copia de ejemplo.');
   }
   if (perfil.isActive === false) {
     throw new Error('Tu cuenta está desactivada. Contacta a quien administra usuarios.');

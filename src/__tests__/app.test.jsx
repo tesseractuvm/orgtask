@@ -35,8 +35,27 @@ describe('Recorrido de la aplicación', () => {
     await usuario.type(screen.getByLabelText('Contraseña'), 'clave-equivocada');
     await usuario.click(screen.getByRole('button', { name: 'Entrar' }));
 
-    expect(await screen.findByRole('alert')).toHaveTextContent(/incorrectos/i);
+    expect(await screen.findByRole('alert')).toHaveTextContent(/contraseña no coincide/i);
     expect(screen.getByRole('button', { name: 'Entrar' })).toBeInTheDocument();
+  });
+
+  it('avisa que no hay base de datos cuando el correo no existe en los datos de ejemplo', async () => {
+    render(<App />);
+    const usuario = userEvent.setup();
+
+    await usuario.type(
+      await screen.findByLabelText('Correo institucional'),
+      'quien.sea@uvm.cl'
+    );
+    await usuario.type(screen.getByLabelText('Contraseña'), DEMO_PASSWORD);
+    await usuario.click(screen.getByRole('button', { name: 'Entrar' }));
+
+    // El mensaje tiene que delatar que la aplicación quedó sin conectar, en vez
+    // de parecerse al de una contraseña equivocada: confundir esas dos cosas es
+    // lo que hace imposible darse cuenta de que faltan las variables de entorno.
+    const aviso = await screen.findByRole('alert');
+    expect(aviso).toHaveTextContent(/no está conectada a la base de datos/i);
+    expect(aviso).toHaveTextContent('quien.sea@uvm.cl');
   });
 
   it('el Director entra y ve las tres áreas en la navegación', async () => {
