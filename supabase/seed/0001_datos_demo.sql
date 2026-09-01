@@ -2,8 +2,8 @@
 -- OrgTask · Equipo del piloto y trabajo de ejemplo
 --
 -- Como ejecutarlo: panel de Supabase, SQL Editor, pegar todo y correr.
--- Requiere haber corrido antes 0001_esquema_inicial.sql, 0002_politicas_seguridad.sql
--- y 0003_color_por_responsable.sql.
+-- Requiere haber corrido antes 0001_esquema_inicial.sql, 0002_politicas_seguridad.sql,
+-- 0003_color_por_responsable.sql y 0004_gestion_de_cuentas.sql.
 -- Es seguro correrlo dos veces: no duplica nada.
 --
 -- Crea las diez cuentas del piloto definidas en el brief, con su area, su rol y
@@ -52,151 +52,51 @@ on conflict (code) do nothing;
 
 
 -- ----------------------------------------------------------------------------
--- 2. Cuentas de prueba
+-- 2. Las diez cuentas del piloto
 --
--- Crear un usuario implica escribir en auth.users, que es la tabla interna de
--- Supabase donde vive el correo y la contrasena cifrada. Esta funcion existe
--- solo durante el seed y se elimina al final: dejarla disponible permitiria
--- que cualquiera con sesion creara cuentas.
+-- Antes este guion traia su propia funcion para crear cuentas, que insertaba en
+-- auth.users dejando en NULL las columnas de token. Esas cuentas se veian bien
+-- en la base pero no podian iniciar sesion: el detalle esta explicado en
+-- 0004_gestion_de_cuentas.sql, que es de donde sale ahora admin_crear_cuenta.
+--
+-- Si el correo ya existe, la funcion no toca nada y devuelve el id que tenia.
 -- ----------------------------------------------------------------------------
-
-create or replace function public.seed_crear_usuario_demo(
-  p_email     text,
-  p_password  text,
-  p_full_name text,
-  p_role      public.user_role,
-  p_area_code text,
-  p_color     text,
-  p_is_admin  boolean default false
-)
-returns uuid
-language plpgsql
-security definer
-set search_path = public, extensions
-as $$
-declare
-  v_user_id           uuid;
-  v_area_id           uuid;
-  v_identity_data     jsonb;
-  v_tiene_provider_id boolean;
-begin
-  -- Si la cuenta ya existe, no se toca
-  select id into v_user_id
-    from auth.users
-   where lower(email) = lower(p_email);
-
-  if v_user_id is not null then
-    return v_user_id;
-  end if;
-
-  if p_area_code is not null then
-    select id into v_area_id from public.areas where code = p_area_code;
-    if v_area_id is null then
-      raise exception 'No existe el area con codigo %', p_area_code;
-    end if;
-  end if;
-
-  v_user_id := gen_random_uuid();
-
-  insert into auth.users (
-    instance_id, id, aud, role, email, encrypted_password,
-    email_confirmed_at, raw_app_meta_data, raw_user_meta_data,
-    created_at, updated_at
-  ) values (
-    '00000000-0000-0000-0000-000000000000',
-    v_user_id,
-    'authenticated',
-    'authenticated',
-    lower(p_email),
-    extensions.crypt(p_password, extensions.gen_salt('bf')),
-    now(),
-    jsonb_build_object('provider', 'email', 'providers', jsonb_build_array('email')),
-    jsonb_build_object('full_name', p_full_name),
-    now(),
-    now()
-  );
-
-  v_identity_data := jsonb_build_object(
-    'sub', v_user_id::text,
-    'email', lower(p_email),
-    'email_verified', true,
-    'phone_verified', false
-  );
-
-  -- La columna provider_id se agrego en versiones recientes de Supabase.
-  -- Se comprueba antes para que el guion funcione en proyectos nuevos y viejos.
-  select exists (
-    select 1 from information_schema.columns
-     where table_schema = 'auth'
-       and table_name   = 'identities'
-       and column_name  = 'provider_id'
-  ) into v_tiene_provider_id;
-
-  if v_tiene_provider_id then
-    insert into auth.identities (
-      id, provider_id, user_id, identity_data, provider,
-      last_sign_in_at, created_at, updated_at
-    ) values (
-      gen_random_uuid(), v_user_id::text, v_user_id, v_identity_data, 'email',
-      now(), now(), now()
-    );
-  else
-    insert into auth.identities (
-      id, user_id, identity_data, provider,
-      last_sign_in_at, created_at, updated_at
-    ) values (
-      gen_random_uuid(), v_user_id, v_identity_data, 'email',
-      now(), now(), now()
-    );
-  end if;
-
-  insert into public.profiles (id, full_name, email, area_id, role, color_token, is_admin)
-  values (v_user_id, p_full_name, lower(p_email), v_area_id, p_role, p_color, p_is_admin);
-
-  return v_user_id;
-end;
-$$;
-
-revoke all on function public.seed_crear_usuario_demo(
-  text, text, text, public.user_role, text, text, boolean
-) from public, anon, authenticated;
-
 
 -- El rol de director ya le da a Daniel las tres areas y todas sus tareas
 -- (ver public.leads_area en la migracion de RLS); is_admin es un permiso
 -- aparte, solo para administrar cuentas, y hoy lo tiene Javier Moya en su
 -- lugar.
-select public.seed_crear_usuario_demo(
+select public.admin_crear_cuenta(
   'daniel.tello@uvm.cl', 'OrgTaskDemo2026', 'Daniel Tello', 'director', null, 'naranjo'
 );
-select public.seed_crear_usuario_demo(
+select public.admin_crear_cuenta(
   'francisca.tapia@uvm.cl', 'OrgTaskDemo2026', 'Francisca Tapia', 'lider', 'CPYG', 'amarillo'
 );
-select public.seed_crear_usuario_demo(
+select public.admin_crear_cuenta(
   'catalina.tamayo@uvm.cl', 'OrgTaskDemo2026', 'Catalina Tamayo', 'colaborador', 'CPYG', 'rosado'
 );
 -- Colaborador de su area y ademas administrador de usuarios: son dos permisos
 -- independientes, asi que puede agregar y desactivar cuentas sin dejar de ser
 -- colaborador de CPyG.
-select public.seed_crear_usuario_demo(
+select public.admin_crear_cuenta(
   'javier.moya@uvm.cl', 'OrgTaskDemo2026', 'Javier Moya', 'colaborador', 'CPYG', 'azul', true
 );
-select public.seed_crear_usuario_demo(
+select public.admin_crear_cuenta(
   'juan.caneo@uvm.cl', 'OrgTaskDemo2026', 'Juan Pablo Caneo', 'lider', 'RYVE', 'verde'
 );
-select public.seed_crear_usuario_demo(
+select public.admin_crear_cuenta(
   'makarena.ibaceta@uvm.cl', 'OrgTaskDemo2026', 'Macarena Ibaceta', 'colaborador', 'RYVE', 'lila'
 );
-select public.seed_crear_usuario_demo(
+select public.admin_crear_cuenta(
   'teresa.urzua@uvm.cl', 'OrgTaskDemo2026', 'Teresita Urzua', 'colaborador', 'RYVE', 'magenta'
 );
-select public.seed_crear_usuario_demo(
+select public.admin_crear_cuenta(
   'jean.munoz@uvm.cl', 'OrgTaskDemo2026', 'Juan Carlos Munoz', 'lider', 'DEPORTES', 'cafe'
 );
-select public.seed_crear_usuario_demo(
+select public.admin_crear_cuenta(
   'gabriel.marschhausen@uvm.cl', 'OrgTaskDemo2026', 'Gabriel Marschhausen', 'colaborador', 'DEPORTES', 'gris'
 );
-select public.seed_crear_usuario_demo(
+select public.admin_crear_cuenta(
   'javiera.alvarez@uvm.cl', 'OrgTaskDemo2026', 'Javiera Alvarez', 'colaborador', 'DEPORTES', 'calipso'
 );
 
@@ -450,12 +350,12 @@ $$;
 
 
 -- ----------------------------------------------------------------------------
--- 5. Limpieza: la funcion que crea cuentas no debe quedar disponible
+-- 5. La funcion que crea cuentas se queda
+--
+-- Vive en 0004 y ya esta fuera del alcance de anon y authenticated, asi que
+-- solo se puede llamar desde el editor SQL del panel. Se queda instalada
+-- porque es la forma de dar de alta a alguien mas adelante.
 -- ----------------------------------------------------------------------------
-
-drop function if exists public.seed_crear_usuario_demo(
-  text, text, text, public.user_role, text, text, boolean
-);
 
 
 -- ----------------------------------------------------------------------------
