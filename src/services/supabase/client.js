@@ -7,8 +7,24 @@ import { createClient } from '@supabase/supabase-js';
  * las necesita. La clave publishable está diseñada para ser pública: por sí sola
  * no da acceso a nada, lo que protege los datos son las políticas RLS.
  */
-const url = import.meta.env.VITE_SUPABASE_URL;
-const key = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+/**
+ * Limpia el valor de una variable de entorno antes de usarlo.
+ *
+ * Al pegar estos valores en el panel de Vercel es facilísimo arrastrar comillas
+ * o un salto de línea sin darse cuenta. Con la URL entrecomillada, `new URL()`
+ * falla, la aplicación decide que Supabase no está configurado y se va al modo
+ * local sin decir nada: queda funcionando con datos de ejemplo y rechazando a
+ * las personas reales. Vale más limpiar el valor que dejar que pase eso.
+ */
+function limpiar(valor) {
+  return String(valor ?? '')
+    .trim()
+    .replace(/^['"]|['"]$/g, '')
+    .trim();
+}
+
+const url = limpiar(import.meta.env.VITE_SUPABASE_URL);
+const key = limpiar(import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY);
 
 /** Detecta si las variables están puestas de verdad o siguen con el texto de ejemplo. */
 export function supabaseConfigurado() {
