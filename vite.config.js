@@ -133,6 +133,8 @@ export default defineConfig(({ mode, command }) => {
       environment: 'jsdom',
       setupFiles: './src/test/setup.js',
       css: false,
+      // Las pruebas de recorrido completo encadenan muchas esperas seguidas
+      testTimeout: 20000,
     },
   };
 });

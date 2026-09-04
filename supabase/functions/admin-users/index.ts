@@ -11,11 +11,19 @@
 // o pegando este archivo en el panel de Supabase, sección Edge Functions.
 //
 // Qué hace cada acción:
-//   create     Crea la cuenta de una persona nueva con una contraseña que
-//              define quien administra usuarios, y que le comunica aparte.
-//              No hay envío de correo: nadie queda esperando un mail.
-//   setActive  Activa o desactiva una cuenta. Nunca se borra a nadie, igual
-//              que las tareas: se archivan, no desaparecen.
+//   create       Crea la cuenta de una persona nueva con una contraseña que
+//                define quien administra usuarios, y que le comunica aparte.
+//                No hay envío de correo: nadie queda esperando un mail.
+//   setActive    Activa o desactiva una cuenta. Nunca se borra a nadie, igual
+//                que las tareas: se archivan, no desaparecen.
+//   setPassword  Le asigna una contraseña nueva a una persona, para cuando la
+//                olvidó o hay que entregarle una temporal.
+//   loginAs      Devuelve un token de un solo uso para iniciar sesión como esa
+//                persona. Sirve para probar el sistema con cada rol sin tener
+//                que conocer su contraseña. Es la acción más delicada de todo
+//                el proyecto: quien administra usuarios queda actuando como
+//                otra persona, así que se registra en el histórico de la cuenta
+//                y solo funciona con cuentas activas.
 //
 // Antes de tocar la base de datos, la función comprueba que quien llama tiene
 // is_admin = true en su propio perfil. Ocultar el botón en la interfaz no
@@ -105,6 +113,8 @@ Deno.serve(async (req) => {
 
   if (body.action === 'create') return crearPersona(admin, body);
   if (body.action === 'setActive') return cambiarActivo(admin, body);
+  if (body.action === 'setPassword') return asignarClave(admin, body);
+  if (body.action === 'loginAs') return tokenParaEntrarComo(admin, body, sesion.user.id);
   return json({ error: 'Acción no reconocida.' }, 400);
 });
 
@@ -193,4 +203,79 @@ async function cambiarActivo(admin: ReturnType<typeof createClient>, body: Recor
   if (error) return json({ error: traducirError(error, 'No se pudo actualizar la cuenta.') }, 400);
 
   return json({ ok: true });
+}
+
+/**
+ * Le asigna una contraseña nueva a una persona. La escribe Supabase Auth en su
+ * propia tabla, cifrada: aquí solo pasa de largo y no queda guardada en ningún
+ * lado de la aplicación.
+ */
+async function asignarClave(admin: ReturnType<typeof createClient>, body: Record<string, unknown>) {
+  const userId = String(body.userId ?? '');
+  const password = String(body.password ?? '');
+
+  if (!userId) return json({ error: 'Falta indicar la persona.' }, 400);
+  if (password.length < 8) {
+    return json({ error: 'La contraseña debe tener al menos 8 caracteres.' }, 400);
+  }
+
+  const { error } = await admin.auth.admin.updateUserById(userId, { password });
+  if (error) {
+    return json({ error: traducirError(error, 'No se pudo asignar la contraseña.') }, 400);
+  }
+
+  return json({ ok: true });
+}
+
+/**
+ * Devuelve un token de un solo uso para iniciar sesión como otra persona.
+ *
+ * El correo se busca acá y no se recibe del navegador: así quien llama no puede
+ * pedir un token para una dirección que no esté registrada como perfil.
+ *
+ * La sesión que se abre es real, no una simulación: las políticas RLS se aplican
+ * con la identidad de esa persona, que es justamente lo que hace útil la prueba.
+ */
+async function tokenParaEntrarComo(
+  admin: ReturnType<typeof createClient>,
+  body: Record<string, unknown>,
+  quienLoPide: string
+) {
+  const userId = String(body.userId ?? '');
+  if (!userId) return json({ error: 'Falta indicar la persona.' }, 400);
+
+  if (userId === quienLoPide) {
+    return json({ error: 'Ya estás usando tu propia cuenta.' }, 400);
+  }
+
+  const { data: destino, error: errorPerfil } = await admin
+    .from('profiles')
+    .select('email, full_name, is_active')
+    .eq('id', userId)
+    .maybeSingle();
+
+  if (errorPerfil || !destino) {
+    return json({ error: 'Esa persona no tiene perfil en la plataforma.' }, 404);
+  }
+  if (!destino.is_active) {
+    return json({ error: 'La cuenta está desactivada. Actívala antes de probar con ella.' }, 400);
+  }
+
+  const { data, error } = await admin.auth.admin.generateLink({
+    type: 'magiclink',
+    email: destino.email,
+  });
+
+  if (error || !data?.properties?.hashed_token) {
+    return json(
+      { error: traducirError(error, 'No se pudo generar el acceso de prueba.') },
+      400
+    );
+  }
+
+  return json({
+    tokenHash: data.properties.hashed_token,
+    email: destino.email,
+    fullName: destino.full_name,
+  });
 }

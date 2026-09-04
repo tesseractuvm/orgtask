@@ -183,3 +183,43 @@ export async function setProfileActive({ profileId, isActive, actor }) {
   updateState({ profiles });
   return profiles.find((p) => p.id === profileId);
 }
+
+/**
+ * Le asigna una contraseña a otra persona. En este modo se guarda tal cual en
+ * el almacén del navegador, porque no hay dónde cifrarla; con Supabase conectado
+ * la escribe Supabase Auth cifrada y nunca pasa por la aplicación.
+ */
+export async function setProfilePassword({ profileId, password, actor }) {
+  await espera(160);
+  if (!canManageUsers(actor)) {
+    throw new Error('Solo quien administra usuarios puede asignar contraseñas.');
+  }
+  if (String(password ?? '').length < 8) {
+    throw new Error('La contraseña debe tener al menos 8 caracteres.');
+  }
+
+  const estado = readState();
+  const profiles = estado.profiles.map((p) =>
+    p.id === profileId ? { ...p, password: String(password) } : p
+  );
+  updateState({ profiles });
+  return profiles.find((p) => p.id === profileId);
+}
+
+/** Entra como otra persona para probar el sistema con su rol. */
+export async function startImpersonation({ profileId, actor }) {
+  await espera(200);
+  if (!canManageUsers(actor)) {
+    throw new Error('Solo quien administra usuarios puede entrar como otra persona.');
+  }
+
+  const estado = readState();
+  const destino = estado.profiles.find((p) => p.id === profileId);
+  if (!destino) throw new Error('Esa persona no tiene perfil en la plataforma.');
+  if (destino.isActive === false) {
+    throw new Error('La cuenta está desactivada. Actívala antes de probar con ella.');
+  }
+
+  updateState({ session: { profileId: destino.id, startedAt: new Date().toISOString() } });
+  return destino;
+}

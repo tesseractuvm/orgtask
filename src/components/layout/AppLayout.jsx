@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import { Menu } from 'lucide-react';
 import Sidebar from './Sidebar';
+import ImpersonationBanner from './ImpersonationBanner';
 
 /**
  * Estructura de la aplicación: barra lateral oscura fija y a la derecha el
@@ -44,6 +45,7 @@ export default function AppLayout() {
       )}
 
       <main className="min-w-0 flex-1">
+        <ImpersonationBanner />
         <Outlet />
       </main>
     </div>

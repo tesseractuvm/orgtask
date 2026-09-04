@@ -1,11 +1,14 @@
 import { useEffect, useState } from 'react';
-import { UserPlus, UserX, UserCheck } from 'lucide-react';
+import { UserPlus, UserX, UserCheck, KeyRound, LogIn } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import PageHeader from '../components/layout/PageHeader';
 import Badge from '../components/Badge';
 import Button from '../components/Button';
 import Toast from '../components/Toast';
 import PersonAvatar from '../components/PersonAvatar';
 import UserFormModal from '../components/users/UserFormModal';
+import PasswordModal from '../components/users/PasswordModal';
+import ImpersonateModal from '../components/users/ImpersonateModal';
 import AccessDenied from './AccessDenied';
 import { useAuth } from '../context/AuthContext';
 import { authService } from '../services';
@@ -20,9 +23,12 @@ import { AREA_TONES } from '../lib/taskFormat';
  * comunica a la persona por fuera de la aplicación.
  */
 export default function Users() {
-  const { profile } = useAuth();
+  const { profile, impersonate } = useAuth();
+  const navigate = useNavigate();
   const [personas, setPersonas] = useState([]);
   const [formulario, setFormulario] = useState(false);
+  const [claveDe, setClaveDe] = useState(null);
+  const [pruebaCon, setPruebaCon] = useState(null);
   const [aviso, setAviso] = useState(null);
   const [ocupada, setOcupada] = useState(null);
 
@@ -114,27 +120,53 @@ export default function Users() {
                   <td className="px-4 py-3 text-sm text-slate-dark">
                     {colorLabel(persona.colorToken)}
                   </td>
-                  <td className="px-4 py-3 text-right">
-                    {persona.id !== profile.id && (
+                  <td className="px-4 py-3">
+                    <div className="flex items-center justify-end gap-1">
                       <button
                         type="button"
-                        onClick={() => alternarActiva(persona)}
-                        disabled={ocupada === persona.id}
-                        aria-label={
-                          persona.isActive === false
-                            ? `Reactivar a ${persona.fullName}`
-                            : `Desactivar a ${persona.fullName}`
-                        }
-                        title={persona.isActive === false ? 'Reactivar cuenta' : 'Desactivar cuenta'}
-                        className="rounded p-1.5 text-slate transition-colors duration-150 enabled:hover:bg-paper enabled:hover:text-ink disabled:text-slate-light"
+                        onClick={() => setClaveDe(persona)}
+                        aria-label={`Asignar contraseña a ${persona.fullName}`}
+                        title="Asignar contraseña"
+                        className="rounded p-1.5 text-slate transition-colors duration-150 hover:bg-paper hover:text-ink"
                       >
-                        {persona.isActive === false ? (
-                          <UserCheck aria-hidden="true" className="h-4 w-4" />
-                        ) : (
-                          <UserX aria-hidden="true" className="h-4 w-4" />
-                        )}
+                        <KeyRound aria-hidden="true" className="h-4 w-4" />
                       </button>
-                    )}
+
+                      {persona.id !== profile.id && persona.isActive !== false && (
+                        <button
+                          type="button"
+                          onClick={() => setPruebaCon(persona)}
+                          aria-label={`Probar el sistema como ${persona.fullName}`}
+                          title="Probar como esta persona"
+                          className="rounded p-1.5 text-slate transition-colors duration-150 hover:bg-paper hover:text-ink"
+                        >
+                          <LogIn aria-hidden="true" className="h-4 w-4" />
+                        </button>
+                      )}
+
+                      {persona.id !== profile.id && (
+                        <button
+                          type="button"
+                          onClick={() => alternarActiva(persona)}
+                          disabled={ocupada === persona.id}
+                          aria-label={
+                            persona.isActive === false
+                              ? `Reactivar a ${persona.fullName}`
+                              : `Desactivar a ${persona.fullName}`
+                          }
+                          title={
+                            persona.isActive === false ? 'Reactivar cuenta' : 'Desactivar cuenta'
+                          }
+                          className="rounded p-1.5 text-slate transition-colors duration-150 enabled:hover:bg-paper enabled:hover:text-ink disabled:text-slate-light"
+                        >
+                          {persona.isActive === false ? (
+                            <UserCheck aria-hidden="true" className="h-4 w-4" />
+                          ) : (
+                            <UserX aria-hidden="true" className="h-4 w-4" />
+                          )}
+                        </button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -142,10 +174,17 @@ export default function Users() {
           </table>
         </div>
 
-        <p className="mt-4 max-w-2xl text-sm text-slate">
-          Nadie se elimina de la plataforma: una cuenta que ya no corresponde se desactiva,
-          igual que una tarea se archiva. Vuelve a activarse cuando haga falta.
-        </p>
+        <div className="mt-4 flex max-w-2xl flex-col gap-2 text-sm text-slate">
+          <p>
+            Nadie se elimina de la plataforma: una cuenta que ya no corresponde se desactiva,
+            igual que una tarea se archiva. Vuelve a activarse cuando haga falta.
+          </p>
+          <p>
+            La llave asigna una contraseña nueva, para cuando alguien la olvidó. La flecha entra
+            como esa persona para probar el sistema con sus permisos: tu sesión se cierra y
+            tendrás que volver a iniciarla después.
+          </p>
+        </div>
       </div>
 
       <UserFormModal
@@ -154,6 +193,30 @@ export default function Users() {
         onSubmit={async (values) => {
           await authService.createProfile({ ...values, actor: profile });
           await cargar();
+        }}
+      />
+
+      <PasswordModal
+        open={Boolean(claveDe)}
+        persona={claveDe}
+        onClose={() => setClaveDe(null)}
+        onSubmit={async (password) => {
+          await authService.setProfilePassword({
+            profileId: claveDe.id,
+            password,
+            actor: profile,
+          });
+        }}
+      />
+
+      <ImpersonateModal
+        open={Boolean(pruebaCon)}
+        persona={pruebaCon}
+        onClose={() => setPruebaCon(null)}
+        onConfirm={async () => {
+          await impersonate(pruebaCon);
+          setPruebaCon(null);
+          navigate('/');
         }}
       />
 

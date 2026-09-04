@@ -174,3 +174,47 @@ export async function createProfile({
 export async function setProfileActive({ profileId, isActive }) {
   return llamarAdminUsers('setActive', { userId: profileId, isActive: Boolean(isActive) });
 }
+
+/**
+ * Le asigna una contraseña nueva a otra persona. La escribe Supabase Auth
+ * cifrada; la aplicación no la guarda en ninguna parte, así que hay que
+ * comunicarla en el momento.
+ */
+export async function setProfilePassword({ profileId, password }) {
+  if (String(password ?? '').length < 8) {
+    throw new Error('La contraseña debe tener al menos 8 caracteres.');
+  }
+  return llamarAdminUsers('setPassword', { userId: profileId, password });
+}
+
+/**
+ * Abre una sesión real como otra persona, para probar el sistema con su rol.
+ *
+ * No es una simulación de la interfaz: se canjea un token de un solo uso por una
+ * sesión de verdad, así que las políticas RLS responden con la identidad de esa
+ * persona. Es la única forma de comprobar que los permisos funcionan.
+ *
+ * Efecto que hay que tener presente: la sesión de quien administra se reemplaza.
+ * Para volver a la propia cuenta hay que iniciar sesión de nuevo.
+ */
+export async function startImpersonation({ profileId }) {
+  const respuesta = await llamarAdminUsers('loginAs', { userId: profileId });
+  if (!respuesta?.tokenHash) {
+    throw new Error('No se pudo generar el acceso de prueba.');
+  }
+
+  const { error } = await supabase.auth.verifyOtp({
+    token_hash: respuesta.tokenHash,
+    type: 'magiclink',
+  });
+
+  if (error) {
+    throw new Error(
+      traducirError(error, 'No se pudo entrar como esa persona. Vuelve a intentarlo.')
+    );
+  }
+
+  await asegurarAreas();
+  const { data } = await supabase.auth.getSession();
+  return perfilDeUsuario(data.session.user.id);
+}

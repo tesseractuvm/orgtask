@@ -1,6 +1,14 @@
 import '@testing-library/jest-dom/vitest';
-import { cleanup } from '@testing-library/react';
+import { cleanup, configure } from '@testing-library/react';
 import { afterEach } from 'vitest';
+
+/**
+ * Las pruebas de recorrido completo encadenan varias esperas (ingreso, carga del
+ * tablero, guardado). Con el límite por defecto de 1 segundo fallaban cuando la
+ * máquina estaba ocupada corriendo el resto de la suite en paralelo, que es un
+ * fallo por lentitud y no por un defecto de la aplicación.
+ */
+configure({ asyncUtilTimeout: 5000 });
 
 /**
  * Node 26 trae su propio `localStorage` global que queda deshabilitado si el
