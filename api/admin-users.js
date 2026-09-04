@@ -48,12 +48,26 @@ const COLORES_VALIDOS = [
 
 const NOMBRES_URL = ['SUPABASE_URL', 'VITE_SUPABASE_URL'];
 
-// Ojo: aqui NO puede aparecer ningun nombre con prefijo VITE_. Ese prefijo
-// existe para entregar variables al navegador, y esta clave da acceso total.
+/**
+ * Nombres aceptados para la clave secreta, en orden de preferencia.
+ *
+ * Los dos ultimos llevan prefijo VITE_, que es el que Vite usa para entregar
+ * variables al navegador, asi que como convencion es el nombre equivocado. Pero
+ * esta funcion corre en el servidor: leer la variable aqui no la expone. Lo que
+ * la expondria es que el codigo del navegador la nombrara, y no lo hace: la
+ * configuracion de Vite solo inyecta al navegador la URL y la clave publica, por
+ * nombre y una por una.
+ *
+ * Se aceptan porque es un nombre que cualquiera pone por descuido en el panel de
+ * Vercel, y fallar por eso deja la administracion de personas muerta sin una
+ * razon real. Cuando llega por uno de esos nombres se avisa en el registro.
+ */
 const NOMBRES_CLAVE = [
   'SUPABASE_SERVICE_ROLE_KEY',
   'SUPABASE_SECRET_KEY',
   'SUPABASE_SERVICE_KEY',
+  'VITE_SUPABASE_SERVICE_ROLE_KEY',
+  'VITE_SUPABASE_SECRET_KEY',
 ];
 
 /** Quita comillas y espacios que se cuelan al pegar un valor en un panel. */
@@ -123,17 +137,25 @@ export default async function handler(req, res) {
       clave.valor ? null : 'la clave secreta (SUPABASE_SERVICE_ROLE_KEY)',
     ].filter(Boolean);
 
-    responder(
-      res,
-      {
-        error:
-          `Al servidor le falta ${faltan.join(' y ')}. ` +
-          'En Vercel se agregan en Settings > Environment Variables, sin el prefijo VITE_. ' +
-          'Para trabajar en localhost, corre "npm run env:pull" y se traen desde Vercel solas.',
-      },
-      500
-    );
+    // El consejo cambia segun donde corre: en Vercel no tiene sentido hablar de
+    // comandos locales, y en un equipo no tiene sentido hablar del panel.
+    const donde = process.env.VERCEL
+      ? 'Se agregan en el proyecto de Vercel, en Settings > Environment Variables, ' +
+        'y hay que volver a desplegar para que se apliquen.'
+      : 'Corre "npm run env:pull" para traerlas desde Vercel.';
+
+    responder(res, { error: `Al servidor le falta ${faltan.join(' y ')}. ${donde}` }, 500);
     return;
+  }
+
+  // Llegó por un nombre pensado para el navegador. Funciona, pero conviene
+  // renombrarla: si algún día el código del navegador la nombra, se publica.
+  if (clave.nombre.startsWith('VITE_')) {
+    console.warn(
+      `[admin-users] La clave secreta llegó como ${clave.nombre}. ` +
+        'Funciona, pero el prefijo VITE_ está reservado para variables que van al ' +
+        'navegador. Conviene renombrarla a SUPABASE_SERVICE_ROLE_KEY.'
+    );
   }
 
   // Con la clave publica estas operaciones fallarian con un error incomprensible

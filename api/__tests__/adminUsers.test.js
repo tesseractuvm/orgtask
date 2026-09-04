@@ -13,6 +13,9 @@ const NOMBRES = [
   'SUPABASE_SERVICE_ROLE_KEY',
   'SUPABASE_SECRET_KEY',
   'SUPABASE_SERVICE_KEY',
+  'VITE_SUPABASE_SERVICE_ROLE_KEY',
+  'VITE_SUPABASE_SECRET_KEY',
+  'VERCEL',
 ];
 
 let guardadas;
@@ -51,7 +54,48 @@ describe('Variables de entorno de la función', () => {
     expect(res.statusCode).toBe(500);
     expect(res.cuerpo.error).toMatch(/URL del proyecto/i);
     expect(res.cuerpo.error).toMatch(/clave secreta/i);
+  });
+
+  it('en Vercel aconseja el panel y no menciona comandos locales', async () => {
+    process.env.VERCEL = '1';
+
+    const { req, res } = peticion();
+    await handler(req, res);
+
+    expect(res.cuerpo.error).toMatch(/Settings > Environment Variables/);
+    expect(res.cuerpo.error).not.toMatch(/env:pull/);
+    expect(res.cuerpo.error).not.toMatch(/localhost/i);
+  });
+
+  it('fuera de Vercel aconseja traer las variables al equipo', async () => {
+    const { req, res } = peticion();
+    await handler(req, res);
+
     expect(res.cuerpo.error).toMatch(/env:pull/);
+  });
+
+  it('acepta la clave aunque venga con el prefijo VITE_, que es el nombre equivocado', async () => {
+    process.env.VITE_SUPABASE_URL = 'https://proyecto.supabase.co';
+    process.env.VITE_SUPABASE_SERVICE_ROLE_KEY = 'sb_secret_abc123';
+
+    // Pasa la revisión de variables y avanza al paso siguiente, que pide sesión
+    const { req, res } = peticion({ authorization: null });
+    await handler(req, res);
+
+    expect(res.statusCode).toBe(401);
+    expect(res.cuerpo.error).toMatch(/iniciar sesión/i);
+  });
+
+  it('prefiere el nombre sin prefijo cuando existen los dos', async () => {
+    process.env.SUPABASE_URL = 'https://proyecto.supabase.co';
+    process.env.SUPABASE_SERVICE_ROLE_KEY = 'sb_secret_correcta';
+    process.env.VITE_SUPABASE_SERVICE_ROLE_KEY = 'sb_publishable_equivocada';
+
+    // Si tomara la del prefijo VITE_, la rechazaría por ser publishable
+    const { req, res } = peticion({ authorization: null });
+    await handler(req, res);
+
+    expect(res.statusCode).toBe(401);
   });
 
   it('avisa solo de la clave si la URL ya está como VITE_SUPABASE_URL', async () => {
