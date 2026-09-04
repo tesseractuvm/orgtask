@@ -47,6 +47,45 @@ function primeroQueExista(nombres, entorno) {
   return { nombre: null, valor: '' };
 }
 
+/**
+ * Sirve las funciones de la carpeta `api/` durante `npm run dev`.
+ *
+ * En Vercel esas funciones existen solas. El servidor de desarrollo de Vite solo
+ * sirve archivos estáticos, así que sin esto la administración de usuarios
+ * funcionaría en producción y no en local, que es la peor combinación posible
+ * para darse cuenta de un error.
+ */
+function funcionesApiEnDesarrollo(entorno) {
+  return {
+    name: 'orgtask-api-dev',
+    apply: 'serve',
+    configureServer(server) {
+      // Las funciones leen sus variables de process.env, igual que en Vercel
+      for (const nombre of ['SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY']) {
+        if (!process.env[nombre] && entorno[nombre]) {
+          process.env[nombre] = limpiar(entorno[nombre]);
+        }
+      }
+
+      server.middlewares.use('/api/admin-users', async (req, res, next) => {
+        try {
+          const modulo = await server.ssrLoadModule('/api/admin-users.js');
+          await modulo.default(req, res);
+        } catch (error) {
+          server.config.logger.error(`[api/admin-users] ${error.message}`);
+          if (!res.headersSent) {
+            res.statusCode = 500;
+            res.setHeader('Content-Type', 'application/json; charset=utf-8');
+            res.end(JSON.stringify({ error: error.message }));
+          } else {
+            next(error);
+          }
+        }
+      });
+    },
+  };
+}
+
 export default defineConfig(({ mode, command }) => {
   // El '' final hace que se lean todas las variables, no solo las VITE_
   const entorno = { ...loadEnv(mode, process.cwd(), ''), ...process.env };
@@ -107,7 +146,7 @@ export default defineConfig(({ mode, command }) => {
   }
 
   return {
-    plugins: [react()],
+    plugins: [react(), funcionesApiEnDesarrollo(entorno)],
     // Se reescriben con el nombre que espera el codigo, venga del nombre que venga
     define: {
       'import.meta.env.VITE_SUPABASE_URL': JSON.stringify(url.valor),

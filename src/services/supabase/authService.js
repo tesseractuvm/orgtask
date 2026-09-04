@@ -119,33 +119,48 @@ export function demoAccounts() {
 }
 
 /**
- * Las dos únicas escrituras que necesitan la clave privilegiada: crear una
- * cuenta y activarla o desactivarla. Viven en la función de Supabase
- * `admin-users`, nunca en el navegador. Esta llamada manda el token de la
- * sesión actual solo para que la función sepa quién pide la acción; el
- * permiso de verdad se comprueba allá, no acá.
+ * Las acciones que necesitan la clave secreta de Supabase: crear cuentas,
+ * activarlas, asignar contraseñas y generar el acceso de prueba.
+ *
+ * Corren en una función serverless de Vercel, en `api/admin-users.js`, no en el
+ * navegador. Se manda el token de la sesión actual solo para que el servidor
+ * sepa quién pide la acción; el permiso de verdad se comprueba allá.
  */
 async function llamarAdminUsers(action, payload) {
-  const { data, error } = await supabase.functions.invoke('admin-users', {
-    body: { action, ...payload },
-  });
+  const { data: sesion } = await supabase.auth.getSession();
+  const token = sesion?.session?.access_token;
+  if (!token) throw new Error('Tu sesión expiró. Vuelve a iniciar sesión.');
 
-  if (error) {
-    let mensaje = 'No se pudo completar la acción.';
-    if (error.context && typeof error.context.json === 'function') {
-      try {
-        const cuerpo = await error.context.json();
-        mensaje = cuerpo?.error ?? mensaje;
-      } catch {
-        // El cuerpo del error no era JSON: se deja el mensaje por defecto
-      }
-    } else if (error.message) {
-      mensaje = error.message;
-    }
-    throw new Error(mensaje);
+  let respuesta;
+  try {
+    respuesta = await fetch('/api/admin-users', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ action, ...payload }),
+    });
+  } catch {
+    throw new Error('No se pudo conectar con el servidor. Revisa tu conexión.');
   }
-  if (data?.error) throw new Error(data.error);
-  return data;
+
+  // Si la ruta no existe, el servidor devuelve el index.html de la aplicación:
+  // pasa cuando se levanta el proyecto sin la función, y conviene decirlo claro
+  // en vez de mostrar un error de formato incomprensible.
+  const tipo = respuesta.headers.get('content-type') ?? '';
+  if (!tipo.includes('application/json')) {
+    throw new Error(
+      'La función de administración no está disponible en este entorno. ' +
+        'Falta desplegar api/admin-users.js o configurar sus variables de entorno.'
+    );
+  }
+
+  const cuerpo = await respuesta.json();
+  if (!respuesta.ok || cuerpo?.error) {
+    throw new Error(cuerpo?.error ?? 'No se pudo completar la acción.');
+  }
+  return cuerpo;
 }
 
 /** Alta de una persona nueva. La contraseña la define quien administra
