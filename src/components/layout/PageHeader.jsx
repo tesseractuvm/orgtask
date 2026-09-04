@@ -1,7 +1,7 @@
 /** Encabezado común de cada vista: título, bajada y acciones a la derecha. */
 export default function PageHeader({ eyebrow, title, description, actions }) {
   return (
-    <header className="border-b border-line bg-surface px-5 py-6 sm:px-8">
+    <header className="border-b border-line bg-surface px-4 py-6 sm:px-8">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="min-w-0">
           {eyebrow && (

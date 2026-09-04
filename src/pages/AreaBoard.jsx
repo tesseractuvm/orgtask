@@ -145,7 +145,7 @@ export default function AreaBoard() {
         }
       />
 
-      <div className="px-5 py-6 sm:px-8">
+      <div className="px-4 py-6 sm:px-8">
         {!board ? (
           <p className="text-base text-slate">Cargando el tablero…</p>
         ) : (
@@ -157,7 +157,9 @@ export default function AreaBoard() {
               if (task && over.id !== task.status) mover(task, over.id);
             }}
           >
-            <div className="flex gap-4 overflow-x-auto pb-2">
+            {/* snap-x hace que al deslizar en un teléfono las columnas se
+                acomoden solas, en vez de quedar cortadas a la mitad */}
+            <div className="flex snap-x snap-mandatory gap-4 overflow-x-auto pb-2 sm:snap-none">
               {STATUSES.map((columna) => (
                 <BoardColumn
                   key={columna.value}

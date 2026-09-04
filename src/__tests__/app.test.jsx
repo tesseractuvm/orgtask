@@ -236,7 +236,9 @@ describe('Recorrido de la aplicación', () => {
     expect(within(confirmacion).getByText(claveGenerada)).toBeInTheDocument();
     await usuario.click(within(confirmacion).getByRole('button', { name: 'Entendido, cerrar' }));
 
-    expect(await screen.findByText('Persona Nueva')).toBeInTheDocument();
+    // findAllByText porque la lista se dibuja dos veces, como tabla y como
+    // tarjetas, y el ancho de pantalla decide cuál se ve
+    expect((await screen.findAllByText('Persona Nueva')).length).toBeGreaterThan(0);
 
     // La cuenta recién creada ya puede entrar, con la clave que se generó
     await usuario.click(screen.getByRole('button', { name: 'Cerrar sesión' }));
@@ -253,10 +255,16 @@ describe('Recorrido de la aplicación', () => {
     const navegacion = await screen.findByRole('navigation', { name: 'Principal' });
     await usuario.click(within(navegacion).getByRole('link', { name: 'Usuarios' }));
 
-    const fila = (await screen.findByText('Francisca Tapia')).closest('tr');
+    // La lista tiene dos presentaciones, tabla y tarjetas, y el navegador oculta
+    // una según el ancho. En las pruebas no hay CSS, así que están las dos: se
+    // trabaja sobre la tabla para no encontrar cada nombre repetido.
+    const tabla = await screen.findByRole('table', {
+      name: /Personas con acceso a la plataforma/i,
+    });
+    const fila = within(tabla).getByText('Francisca Tapia').closest('tr');
     await usuario.click(within(fila).getByRole('button', { name: /Desactivar a Francisca Tapia/ }));
 
-    await screen.findByText('Desactivada');
+    await screen.findAllByText('Desactivada');
 
     await usuario.click(screen.getByRole('button', { name: 'Cerrar sesión' }));
     await screen.findByLabelText('Correo institucional');

@@ -44,7 +44,7 @@ export default function Home() {
         }
       />
 
-      <div className="flex flex-col gap-8 px-5 py-6 sm:px-8">
+      <div className="flex flex-col gap-8 px-4 py-6 sm:px-8">
         {!resumen ? (
           <p className="text-base text-slate">Cargando…</p>
         ) : (

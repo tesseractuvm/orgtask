@@ -19,7 +19,7 @@ export default function BoardColumn({ status, label, tasks, cardProps }) {
 
   return (
     <section
-      className="flex w-full shrink-0 flex-col sm:w-80"
+      className="flex w-full shrink-0 snap-start flex-col sm:w-80"
       aria-labelledby={`columna-${status}`}
     >
       <div className="flex items-center justify-between gap-2 border-b-2 border-line px-1 pb-2">

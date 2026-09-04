@@ -69,7 +69,7 @@ export default function Profile() {
     <>
       <PageHeader eyebrow="Tu cuenta" title="Perfil" description="Tus datos y tu rol en la DEE." />
 
-      <div className="flex flex-col gap-8 px-5 py-6 sm:px-8">
+      <div className="flex flex-col gap-8 px-4 py-6 sm:px-8">
         <section aria-labelledby="datos" className="max-w-md">
           <h2 id="datos" className="text-lg">
             Tus datos

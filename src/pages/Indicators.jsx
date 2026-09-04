@@ -55,7 +55,7 @@ export default function Indicators() {
         description="El estado actual del trabajo y cómo viene evolucionando mes a mes."
       />
 
-      <div className="flex flex-col gap-8 px-5 py-6 sm:px-8">
+      <div className="flex flex-col gap-8 px-4 py-6 sm:px-8">
         <section aria-labelledby="ahora">
           <h2 id="ahora" className="text-lg">
             Ahora mismo
@@ -100,14 +100,22 @@ export default function Indicators() {
           <h2 id="por-area" className="text-lg">
             Por área y columna
           </h2>
-          <div className="mt-3 overflow-x-auto rounded border border-line bg-surface shadow-card">
-            <table className="w-full min-w-[480px] border-collapse text-left">
+          {/* Sin ancho mínimo: los encabezados se parten en dos líneas y la
+              tabla entra completa en un teléfono, sin desplazamiento lateral */}
+          <div className="mt-3 rounded border border-line bg-surface shadow-card">
+            <table className="w-full border-collapse text-left">
               <caption className="sr-only">Tareas abiertas por área y por columna</caption>
               <thead>
                 <tr className="border-b border-line">
-                  <th scope="col" className="px-4 py-2.5 text-sm font-medium text-slate">Área</th>
+                  <th scope="col" className="px-2 py-2.5 text-sm font-medium text-slate sm:px-4">
+                    Área
+                  </th>
                   {['por_hacer', 'en_proceso', 'hecho'].map((estado) => (
-                    <th key={estado} scope="col" className="px-4 py-2.5 text-sm font-medium text-slate">
+                    <th
+                      key={estado}
+                      scope="col"
+                      className="px-2 py-2.5 text-sm font-medium text-slate sm:px-4"
+                    >
                       {statusLabel(estado)}
                     </th>
                   ))}
@@ -116,12 +124,16 @@ export default function Indicators() {
               <tbody className="divide-y divide-line">
                 {datos.porColumna.map((fila) => (
                   <tr key={fila.areaCode}>
-                    <th scope="row" className="px-4 py-3">
+                    <th scope="row" className="px-2 py-3 sm:px-4">
                       <Badge tone={AREA_TONES[fila.areaCode].badge}>{fila.shortName}</Badge>
                     </th>
-                    <td className="px-4 py-3 font-mono text-base text-ink">{fila.por_hacer}</td>
-                    <td className="px-4 py-3 font-mono text-base text-ink">{fila.en_proceso}</td>
-                    <td className="px-4 py-3 font-mono text-base text-ink">{fila.hecho}</td>
+                    <td className="px-2 py-3 font-mono text-base text-ink sm:px-4">
+                      {fila.por_hacer}
+                    </td>
+                    <td className="px-2 py-3 font-mono text-base text-ink sm:px-4">
+                      {fila.en_proceso}
+                    </td>
+                    <td className="px-2 py-3 font-mono text-base text-ink sm:px-4">{fila.hecho}</td>
                   </tr>
                 ))}
               </tbody>

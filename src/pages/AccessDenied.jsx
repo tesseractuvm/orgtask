@@ -7,7 +7,7 @@ export default function AccessDenied({ motivo = 'No tienes acceso a esta secció
   return (
     <>
       <PageHeader eyebrow="Acceso restringido" title="Aquí no puedes entrar" description={motivo} />
-      <div className="px-5 py-6 sm:px-8">
+      <div className="px-4 py-6 sm:px-8">
         <div className="flex max-w-lg flex-col items-start gap-3 rounded border border-line bg-surface p-5 shadow-card">
           <ShieldOff aria-hidden="true" className="h-5 w-5 text-slate" />
           <p className="text-base text-slate-dark">

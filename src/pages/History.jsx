@@ -87,7 +87,7 @@ export default function History() {
         description="El trabajo ya ejecutado y archivado, con la cronología completa de cada tarea."
       />
 
-      <div className="px-5 py-6 sm:px-8">
+      <div className="px-4 py-6 sm:px-8">
         <div className="grid gap-4 rounded border border-line bg-surface p-4 shadow-card sm:grid-cols-2 lg:grid-cols-4">
           <Select
             label="Área"
