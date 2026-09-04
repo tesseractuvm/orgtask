@@ -6,6 +6,8 @@
   "description": "Plataforma de gestion de tareas para la Direccion de Desarrollo Estudiantil y Exalumnos (DEE) de UVM",
   "scripts": {
     "dev": "vite",
+    "env:pull": "vercel env pull .env.local",
+    "dev:vercel": "vercel dev",
     "build": "vite build",
     "preview": "vite preview",
     "test": "vitest run",
