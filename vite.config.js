@@ -60,8 +60,16 @@ function funcionesApiEnDesarrollo(entorno) {
     name: 'orgtask-api-dev',
     apply: 'serve',
     configureServer(server) {
-      // Las funciones leen sus variables de process.env, igual que en Vercel
-      for (const nombre of ['SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY']) {
+      // Las funciones leen sus variables de process.env, igual que en Vercel.
+      // Se pasan todos los nombres posibles y la funcion elige el que exista.
+      const nombresDeServidor = [
+        'SUPABASE_URL',
+        'VITE_SUPABASE_URL',
+        'SUPABASE_SERVICE_ROLE_KEY',
+        'SUPABASE_SECRET_KEY',
+        'SUPABASE_SERVICE_KEY',
+      ];
+      for (const nombre of nombresDeServidor) {
         if (!process.env[nombre] && entorno[nombre]) {
           process.env[nombre] = limpiar(entorno[nombre]);
         }

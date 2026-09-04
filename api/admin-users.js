@@ -9,8 +9,16 @@
 // del lado del servidor.
 //
 // Variables que necesita, en Vercel > Settings > Environment Variables:
-//   SUPABASE_URL                 la misma URL del proyecto
-//   SUPABASE_SERVICE_ROLE_KEY    la clave secreta (sb_secret_... o service_role)
+//   la URL del proyecto, con cualquiera de estos nombres:
+//     SUPABASE_URL  ·  VITE_SUPABASE_URL
+//   la clave secreta, con cualquiera de estos nombres:
+//     SUPABASE_SERVICE_ROLE_KEY  ·  SUPABASE_SECRET_KEY  ·  SUPABASE_SERVICE_KEY
+//
+// Se aceptan varios nombres a proposito: la URL suele estar ya configurada como
+// VITE_SUPABASE_URL para el navegador, y exigirla dos veces con dos nombres
+// distintos solo genera fallos difíciles de entender. La URL es publica, asi que
+// no hay problema en leerla de la variable del navegador. La clave secreta no:
+// esa nunca puede llevar el prefijo VITE_, y si llega una publica se avisa.
 //
 // Qué hace cada acción:
 //   create       Crea la cuenta de una persona nueva con una contraseña que
@@ -37,6 +45,32 @@ const COLORES_VALIDOS = [
   'amarillo', 'rosado', 'azul', 'verde', 'lila',
   'magenta', 'cafe', 'gris', 'calipso', 'naranjo',
 ];
+
+const NOMBRES_URL = ['SUPABASE_URL', 'VITE_SUPABASE_URL'];
+
+// Ojo: aqui NO puede aparecer ningun nombre con prefijo VITE_. Ese prefijo
+// existe para entregar variables al navegador, y esta clave da acceso total.
+const NOMBRES_CLAVE = [
+  'SUPABASE_SERVICE_ROLE_KEY',
+  'SUPABASE_SECRET_KEY',
+  'SUPABASE_SERVICE_KEY',
+];
+
+/** Quita comillas y espacios que se cuelan al pegar un valor en un panel. */
+function limpiar(valor) {
+  return String(valor ?? '')
+    .trim()
+    .replace(/^['"]|['"]$/g, '')
+    .trim();
+}
+
+function primeraQueExista(nombres, entorno) {
+  for (const nombre of nombres) {
+    const valor = limpiar(entorno[nombre]);
+    if (valor) return { nombre, valor };
+  }
+  return { nombre: null, valor: '' };
+}
 
 /** Responde JSON usando solo la interfaz estándar de Node, para que el mismo
  * archivo sirva en Vercel y en el servidor de desarrollo de Vite. */
@@ -80,16 +114,37 @@ export default async function handler(req, res) {
     return;
   }
 
-  const url = process.env.SUPABASE_URL;
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const url = primeraQueExista(NOMBRES_URL, process.env);
+  const clave = primeraQueExista(NOMBRES_CLAVE, process.env);
 
-  if (!url || !serviceKey) {
+  if (!url.valor || !clave.valor) {
+    const faltan = [
+      url.valor ? null : 'la URL del proyecto (SUPABASE_URL)',
+      clave.valor ? null : 'la clave secreta (SUPABASE_SERVICE_ROLE_KEY)',
+    ].filter(Boolean);
+
     responder(
       res,
       {
         error:
-          'El servidor no tiene configuradas SUPABASE_URL y SUPABASE_SERVICE_ROLE_KEY. ' +
-          'Se agregan en Vercel, en Settings > Environment Variables, sin el prefijo VITE_.',
+          `Al servidor le falta ${faltan.join(' y ')}. ` +
+          'En Vercel se agregan en Settings > Environment Variables, sin el prefijo VITE_. ' +
+          'Para trabajar en localhost, corre "npm run env:pull" y se traen desde Vercel solas.',
+      },
+      500
+    );
+    return;
+  }
+
+  // Con la clave publica estas operaciones fallarian con un error incomprensible
+  if (/^sb_publishable_/.test(clave.valor)) {
+    responder(
+      res,
+      {
+        error:
+          `La variable ${clave.nombre} tiene una clave publishable, que es la publica. ` +
+          'Administrar cuentas necesita la clave secreta (sb_secret_...), en Supabase: ' +
+          'Project Settings > API Keys > Secret keys.',
       },
       500
     );
@@ -104,7 +159,7 @@ export default async function handler(req, res) {
   }
 
   // Cliente con la clave secreta: todo lo que sigue pasa por acá.
-  const admin = createClient(url, serviceKey, {
+  const admin = createClient(url.valor, clave.valor, {
     auth: { autoRefreshToken: false, persistSession: false },
   });
 
